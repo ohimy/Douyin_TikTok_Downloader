@@ -1,0 +1,471 @@
+/* Application shell: sidebar, top bar, content column. */
+
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) 1fr;
+  min-height: 100vh;
+  background: var(--bg-base);
+}
+
+.shellCollapsed {
+  grid-template-columns: var(--sidebar-width-collapsed) 1fr;
+}
+
+.sidebar {
+  border-right: 1px solid var(--border-subtle);
+  background: var(--bg-base);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--topbar-height);
+  padding: 0 var(--space-3);
+  border-bottom: 1px solid var(--border-subtle);
+  flex: none;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Enough to say it can be clicked, and not enough to compete with the nav
+   row that is actually selected. No underline: the brand name is a wordmark
+   here, not a piece of prose with a link in it. */
+.brand:hover {
+  background: var(--bg-raised);
+  text-decoration: none;
+}
+
+.brand:hover .brandMark {
+  color: var(--accent-hover);
+}
+
+/* Already home. The row stays quiet rather than looking like a dead link. */
+.brandActive {
+  cursor: default;
+}
+
+/*
+ * The mark gets the whole box rather than sitting inside a filled tile.
+ *
+ * It was a 22px accent square with a 15px glyph in it, and at that size the
+ * braces and the arrow ran together into a smudge. A line drawing needs its
+ * strokes far enough apart to stay separate, and the cheapest way to buy that
+ * is to stop spending a third of the box on padding.
+ */
+.brandMark {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  color: var(--accent);
+  flex: none;
+}
+
+.brandName {
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-base);
+  letter-spacing: 0.01em;
+}
+
+/*
+ * No visible scrollbar, and that is an alignment fix rather than a taste one.
+ *
+ * A classic (non-overlay) scrollbar is laid out inside this box and takes its
+ * width out of the content, while the pinned block below - which does not
+ * scroll - keeps the full width. The two then disagree about where the left
+ * edge is: measured 6px on this machine, which is enough to knock the About
+ * icon out of the column of nav icons when the sidebar is collapsed to 56px.
+ * Compensating for it in CSS is not possible, because nothing exposes the
+ * scrollbar's width and it differs per platform and per setting.
+ *
+ * The affordance survives: this scrolls by wheel and trackpad, keyboard focus
+ * still scrolls a focused row into view, and the list is grouped with headings
+ * so a cut-off group reads as cut off. Most macOS users never saw the bar
+ * anyway - overlay scrollbars are the default there.
+ */
+/*
+ * The sidebar inside the mobile drawer.
+ *
+ * It drops `.sidebar` because the drawer supplies the frame - border,
+ * background, sticky positioning - but it still has to be a column that fills
+ * the height it is given. Without that, `.navScroll` sizes to its content and
+ * the pinned foot underneath it floats up against the last nav group instead
+ * of sitting at the bottom of the drawer.
+ */
+.embedded {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.navScroll {
+  overflow-y: auto;
+  padding: var(--space-2) var(--space-2) var(--space-4);
+  flex: 1 1 auto;
+  scrollbar-width: none;
+}
+
+.navScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.navGroup {
+  margin-bottom: var(--space-3);
+}
+
+.navGroupTitle {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  padding: var(--space-1) var(--space-2);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-2);
+  height: 30px;
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  white-space: nowrap;
+  min-width: 0;
+  transition:
+    background-color var(--duration-1) var(--ease),
+    color var(--duration-1) var(--ease);
+}
+
+.navLink:hover {
+  background: var(--bg-raised);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.navLinkActive {
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+.navIcon {
+  flex: none;
+  display: inline-flex;
+}
+
+.sidebarFooter {
+  border-top: 1px solid var(--border-subtle);
+  padding: var(--space-2);
+  flex: none;
+}
+
+.collapseButton {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  height: 28px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.collapseButton:hover {
+  background: var(--bg-raised);
+  color: var(--text);
+}
+
+.collapsed .navLink,
+.collapsed .about {
+  justify-content: center;
+  padding: 0;
+}
+
+.collapsed .navGroupTitle,
+.collapsed .brandName,
+.collapsed .navLabel,
+.collapsed .collapseLabel {
+  display: none;
+}
+
+/* Top bar -------------------------------------------------------------------- */
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.topbar {
+  height: var(--topbar-height);
+  border-bottom: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--bg-base) 88%, transparent);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 0 var(--space-4);
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  min-width: 0;
+}
+
+.breadcrumbCurrent {
+  color: var(--text);
+  font-weight: var(--weight-medium);
+}
+
+.topbarActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex: none;
+}
+
+.envTag {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 1px var(--space-2);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.iconButton {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius);
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+}
+
+.iconButton:hover {
+  background: var(--bg-raised);
+  color: var(--text);
+}
+
+.content {
+  padding: var(--space-5) var(--space-5) var(--space-8);
+  width: 100%;
+  max-width: var(--content-max);
+  margin: 0 auto;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/*
+ * Opt-in full-height page.
+ *
+ * .shell is min-height:100vh and not height:100vh on purpose - the shell has to
+ * grow past the viewport for a long page, and pinning it to the viewport would
+ * leave the sticky sidebar with no room to travel. The cost is that nothing
+ * between #root and .content has a definite height, so a page child asking for
+ * height:100% resolves to auto and a three-column layout collapses to its
+ * content. A page that wants to own the viewport instead marks its root element
+ * with data-shell-fill; :has() then makes that one chain definite
+ * (shell -> main -> content -> the marked element) without any change to the
+ * shell markup or to a page that does not ask. Do not "simplify" the min-height
+ * above into a height: that clips every scrolling page in the console.
+ */
+.shell:has([data-shell-fill]) {
+  height: 100vh;
+  /* Mobile browsers count their collapsing toolbar in vh but not in dvh, so the
+     last rows of a filled page would sit under the URL bar. */
+  height: 100dvh;
+}
+
+.shell:has([data-shell-fill]) .main {
+  min-height: 0;
+}
+
+/* The filled page scrolls inside its own panes, so the column must not grow.
+ * Its padding shrinks too: the generous bottom gutter exists to let a scrolling
+ * page end clear of the viewport edge, and on a page that cannot scroll it is
+ * 48px of nothing between the last row and the bottom of the screen. */
+.shell:has([data-shell-fill]) .content {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: var(--space-4);
+}
+
+.shell [data-shell-fill] {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+
+.centered {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-5);
+  background: var(--bg-base);
+}
+
+.centeredPanel {
+  width: 100%;
+  max-width: 420px;
+}
+
+.skipLink {
+  position: absolute;
+  left: var(--space-3);
+  top: -40px;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-1) var(--space-3);
+  z-index: var(--z-toast);
+  transition: top var(--duration-1) var(--ease);
+}
+
+.skipLink:focus {
+  top: var(--space-2);
+}
+
+.mobileNav {
+  display: none;
+}
+
+@media (max-width: 1279px) {
+  .shell {
+    grid-template-columns: var(--sidebar-width-collapsed) 1fr;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Under 768px the sidebar becomes a drawer. */
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .mobileNav {
+    display: inline-flex;
+  }
+
+  .content {
+    padding: var(--space-4) var(--space-3) var(--space-6);
+  }
+
+  .topbar {
+    padding: 0 var(--space-3);
+  }
+
+  .envTag {
+    display: none;
+  }
+}
+
+/*
+ * The about link, pinned under the navigation.
+ *
+ * Styled as a nav item because it is one, but kept out of NAV_ITEMS: the
+ * groups above are places you work, and this is the colophon. It sits at the
+ * bottom for the same reason a colophon does.
+ */
+/*
+ * The pinned foot of the navigation: About, then who pays for this.
+ *
+ * It carries the separator from the scrolling list above, so neither child has
+ * to. A border on either of them would be worse than no border: both get a
+ * rounded hover background, and a full-width rule cutting across the top of a
+ * rounded highlight is a seam, not a division.
+ */
+.pinned {
+  flex: none;
+  padding: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* Sized as a nav row, because it is one. It was 2px shorter, a step darker and
+   a step rounder than the links above it, which made the last item in the
+   sidebar look like a mistake rather than a destination. */
+.about {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 30px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  min-width: 0;
+}
+
+.about:hover {
+  background: var(--bg-raised);
+  color: var(--text);
+}
+
+.aboutActive {
+  background: var(--bg-raised);
+  color: var(--text);
+}
+
+/*
+ * The demo banner, at the top of every console page for the demo account.
+ *
+ * Accent rather than caution: a visitor on a public demo has not made a
+ * mistake and nothing is wrong, so the colour that says "note" is the honest
+ * one. Warning colours here would train the operator's own eye to ignore them
+ * on the pages where they mean something.
+ */
+.demoBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-accent-border, var(--color-border));
+  border-radius: var(--radius-md);
+  background: var(--color-accent-soft, var(--color-surface-2));
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+.demoBar strong {
+  color: var(--color-text);
+}
+
+.demoBar a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-left: auto;
+  color: var(--color-accent-text, var(--color-text));
+  white-space: nowrap;
+}

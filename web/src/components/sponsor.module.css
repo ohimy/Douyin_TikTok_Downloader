@@ -1,0 +1,104 @@
+/*
+ * Sponsor placements.
+ *
+ * The logo is a white square, so every variant gives it a white tile
+ * deliberately - on the dark theme an unbacked white image reads as a broken
+ * render rather than as somebody's brand.
+ */
+
+.full {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: inherit;
+}
+
+.full:hover {
+  border-color: var(--border-strong);
+  background: var(--bg-raised);
+}
+
+.full img,
+.compact img {
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  background: #ffffff;
+  /* The hairline is for the light theme, where a white tile on a near-white
+     page has no edge and the mark reads as floating in the margin. On dark it
+     costs nothing. */
+  outline: 1px solid var(--border-subtle);
+  padding: 2px;
+  flex: none;
+}
+
+/* Said out loud, in both variants. Paid placement that reads as a feature is a
+   dark pattern anywhere, and this is somebody's own admin panel. */
+.fullLabel,
+.compactLabel {
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/*
+ * The sidebar strip. Two lines at the foot of the navigation, on every page.
+ *
+ * Flat until hovered, like the nav rows it sits under: a filled block here
+ * would out-shout the page the operator is actually trying to reach. The
+ * separator from the list above belongs to the wrapper in shell.module.css,
+ * not here - this used to own it, and then About was moved above the strip and
+ * the rule ended up in the middle of the pinned block.
+ */
+.compact {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  min-width: 0;
+}
+
+/* No underline: `a:hover` in base.css adds one, and here it would strike
+   through two lines of text inside a row that already lifts its background and
+   carries an away-arrow. The nav rows it sits under do not underline either. */
+.compact:hover {
+  background: var(--bg-raised);
+  color: var(--text);
+  text-decoration: none;
+}
+
+/* Says the link leaves the console. Without it the strip is shaped exactly
+   like the nav row above it, which promises a page that does not exist here. */
+.compactAway {
+  color: var(--text-muted);
+  flex: none;
+}
+
+.compact:hover .compactAway {
+  color: var(--text-secondary);
+}
+
+.compact:hover img {
+  outline: 1px solid var(--border-strong);
+}
+
+.compactText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.compactName {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}

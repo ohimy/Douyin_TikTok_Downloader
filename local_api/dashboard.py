@@ -1,0 +1,72 @@
+"""Self-contained local management dashboard.
+
+Keeping the page in a Python module means PyInstaller includes it without a
+separate static-file collection rule. It intentionally depends on no CDN or
+third-party browser script, so it keeps working on an isolated intranet.
+"""
+
+from __future__ import annotations
+
+
+DASHBOARD_HTML = r"""<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>社媒数据服务 · 管理面板</title>
+  <style>
+    :root{--bg:#0a1020;--panel:#111b31;--line:#243450;--text:#edf3ff;--muted:#93a4be;--blue:#5e9cff;--green:#4ed39a;--amber:#ffbe55;--red:#ff707f;--radius:18px}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 15% -10%,#1c3767 0,transparent 34%),var(--bg);color:var(--text);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Microsoft YaHei",sans-serif}
+    button,input,select{font:inherit}button{cursor:pointer;color:var(--text);border:1px solid var(--line);background:#192741;border-radius:10px;padding:9px 12px;transition:.15s}button:hover{border-color:#5687d4;background:#203456}button:disabled{cursor:not-allowed;opacity:.6}.primary{border:0;background:linear-gradient(135deg,#518cff,#7a61ff)}.danger{color:#ffd7db}.wrap{width:min(1240px,calc(100% - 32px));margin:0 auto}.top{padding:30px 0 24px;display:flex;gap:18px;align-items:center;justify-content:space-between}.eyebrow{color:#83b3ff;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}.top h1{font-size:26px;margin:2px 0 0;letter-spacing:-.03em}.top-actions{display:flex;gap:9px;flex-wrap:wrap}.top a{color:inherit;text-decoration:none}.grid{display:grid;gap:14px}.metrics{grid-template-columns:repeat(4,1fr)}.metric,.panel,.account{background:linear-gradient(135deg,rgba(24,38,67,.98),rgba(13,23,43,.98));border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 14px 40px rgba(0,0,0,.15)}.metric{padding:17px}.metric-label{color:var(--muted);font-size:12px}.metric-value{font-weight:750;font-size:25px;margin:3px 0}.metric-detail{color:var(--muted);font-size:12px}.content{grid-template-columns:minmax(0,1.6fr) minmax(300px,.9fr);margin:14px 0}.panel{padding:20px}.panel h2{font-size:16px;margin:0}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:17px}.accounts{display:grid;gap:11px}.account{padding:15px;display:grid;grid-template-columns:48px 1fr auto;gap:13px;align-items:center}.avatar{width:48px;height:48px;border-radius:50%;object-fit:cover;background:#243a61}.avatar-fallback{display:grid;place-items:center;font-weight:800;background:linear-gradient(135deg,#497ecb,#7159bc)}.account-title{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.account-name{font-weight:700}.platform,.small{font-size:12px;color:var(--muted)}.status{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 8px;font-size:12px;font-weight:650}.status:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}.active{background:#123827;color:var(--green)}.needs_login{background:#452225;color:#ff9ba5}.unknown{background:#4b351b;color:var(--amber)}.checking,.logging_in{background:#172f54;color:#91bdff}.account-meta{display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:3px}.account-actions{display:flex;gap:7px;align-self:start}.account-actions button{padding:7px 9px;font-size:12px}.form-row{display:grid;grid-template-columns:110px 1fr auto;gap:8px}.field{width:100%;color:var(--text);background:#0d172b;border:1px solid var(--line);border-radius:10px;padding:10px}.help{color:var(--muted);font-size:12px;margin:9px 0 0}.notice{min-height:22px;margin:13px 0 0;color:var(--muted)}.notice.error{color:#ff9ba5}.notice.ok{color:var(--green)}.section{border-top:1px solid var(--line);margin-top:22px;padding-top:20px}.api-list{display:grid;gap:8px}.api{border:1px solid var(--line);border-radius:12px;padding:10px;background:#0d172b}.method{font-weight:750;color:#8eb8ff;font-size:12px;margin-right:7px}.path{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;word-break:break-all}.security{display:grid;gap:9px}.security div{border-left:3px solid var(--blue);background:#0d172b;padding:9px 11px;color:var(--muted);font-size:12px}.empty{border:1px dashed var(--line);border-radius:12px;color:var(--muted);padding:25px;text-align:center}.footer{color:var(--muted);font-size:12px;padding:4px 0 30px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px}.copy{color:var(--muted);font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;cursor:pointer}.copy:hover{color:var(--text)}
+    @media(max-width:860px){.metrics{grid-template-columns:repeat(2,1fr)}.content{grid-template-columns:1fr}.account{grid-template-columns:44px 1fr}.account-actions{grid-column:2;justify-self:start}.top{align-items:flex-start;flex-direction:column}.form-row{grid-template-columns:1fr}.form-row button{justify-self:start}}@media(max-width:450px){.metrics{grid-template-columns:1fr}.wrap{width:min(100% - 20px,1240px)}.top{padding-top:18px}.account{gap:10px;padding:12px}}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header class="top">
+      <div><div class="eyebrow"><span class="dot"></span>Local intranet service</div><h1>社媒数据服务 · 管理面板</h1></div>
+      <nav class="top-actions"><a href="/docs" target="_blank" rel="noopener"><button>API 文档</button></a><button id="refresh">刷新状态</button></nav>
+    </header>
+    <section class="grid metrics" aria-label="服务概况">
+      <article class="metric"><div class="metric-label">服务状态</div><div class="metric-value" id="service-status">加载中</div><div class="metric-detail" id="service-detail">正在连接本地服务</div></article>
+      <article class="metric"><div class="metric-label">已登录账号</div><div class="metric-value" id="active-count">—</div><div class="metric-detail" id="account-detail">—</div></article>
+      <article class="metric"><div class="metric-label">需要重登</div><div class="metric-value" id="relogin-count">—</div><div class="metric-detail">失效或未完成登录的账号</div></article>
+      <article class="metric"><div class="metric-label">自动检查</div><div class="metric-value" id="interval">—</div><div class="metric-detail" id="uptime">—</div></article>
+    </section>
+    <section class="grid content">
+      <section class="panel">
+        <div class="panel-head"><h2>账号与登录态</h2><button id="check-all">检查全部有效账号</button></div>
+        <div class="accounts" id="accounts"><div class="empty">正在读取账号状态…</div></div>
+        <div class="section"><h2>添加或重新登录</h2><form id="login-form"><div class="form-row"><select class="field" id="platform" aria-label="平台"><option value="douyin">抖音</option><option value="xhs">小红书</option></select><input class="field" id="label" maxlength="80" required placeholder="账号备注，例如：运营号 A"><button class="primary" type="submit">打开隔离登录窗口</button></div></form><p class="help">每个账号使用独立 Chrome 配置目录。扫码或密码登录后，服务会自动验证状态并保存本地会话。</p></div>
+        <div class="section"><h2>小红书链接解析</h2><form id="resolve-form"><div class="form-row"><input class="field" id="xhs-url" required placeholder="粘贴小红书笔记、主页或分享链接"><input class="field" id="xhs-account" maxlength="64" placeholder="可选：账号 ID"><button type="submit">解析</button></div></form><p class="help">仅显示可用于请求的内容 ID；临时签名令牌不会显示在面板中。</p></div>
+        <p class="notice" id="notice" role="status" aria-live="polite"></p>
+      </section>
+      <aside class="panel">
+        <div class="panel-head"><h2>服务信息</h2></div>
+        <div class="api-list"><div class="api"><span class="method">地址</span><span class="path" id="listen-address">—</span></div><div class="api"><span class="method">数据目录</span><span class="path" id="data-dir">—</span></div><div class="api"><span class="method">启动时间</span><span class="path" id="started-at">—</span></div></div>
+        <div class="section"><h2>常用读取接口</h2><div class="api-list"><div class="api"><span class="method">GET</span><span class="path">/api/v1/douyin/users/{sec_user_id}/posts</span></div><div class="api"><span class="method">GET</span><span class="path">/api/v1/douyin/videos/{aweme_id}</span></div><div class="api"><span class="method">GET</span><span class="path">/api/v1/xhs/users/{user_id}/posts</span></div><div class="api"><span class="method">GET</span><span class="path">/api/v1/xhs/notes/{note_id}</span></div></div></div>
+        <div class="section"><h2>安全提示</h2><div class="security"><div>Cookie 不会出现在面板或账号接口响应中。</div><div>本服务没有内置访问鉴权；只应暴露给受信任的内网。</div><div>账号检查会访问平台；请避免短时间内频繁点击检查全部。</div></div></div>
+      </aside>
+    </section>
+    <footer class="footer">状态每 15 秒自动刷新。最后更新：<span id="last-refresh">—</span></footer>
+  </main>
+  <script>
+    const $=id=>document.getElementById(id), esc=value=>String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+    const platform=value=>value==='xhs'?'小红书':'抖音';
+    const when=value=>value?new Intl.DateTimeFormat('zh-CN',{dateStyle:'short',timeStyle:'medium'}).format(new Date(value)):'—';
+    const elapsed=seconds=>{seconds=Math.max(0,Math.floor(seconds||0));if(seconds<60)return seconds+' 秒';if(seconds<3600)return Math.floor(seconds/60)+' 分钟';return Math.floor(seconds/3600)+' 小时';};
+    function notice(message,type=''){const node=$('notice');node.textContent=message;node.className='notice '+type;}
+    async function request(url,options){const response=await fetch(url,options);const body=await response.json().catch(()=>({}));if(!response.ok)throw new Error(typeof body.detail==='string'?body.detail:'请求失败（HTTP '+response.status+'）');return body;}
+    function accountCard(account){const image=account.avatar_url?`<img class="avatar" src="${esc(account.avatar_url)}" alt="" referrerpolicy="no-referrer">`:`<div class="avatar avatar-fallback">${esc((account.nickname||account.label||'?').slice(0,1))}</div>`;const hint=account.last_error?`<span title="${esc(account.last_error)}">${esc(account.last_error)}</span>`:'';return `<article class="account"><div>${image}</div><div><div class="account-title"><span class="account-name">${esc(account.nickname||account.label)}</span><span class="platform">${platform(account.platform)} · ${esc(account.label)}</span><span class="status ${esc(account.status)}">${esc(account.status)}</span></div><div class="account-meta"><span>最近校验：${when(account.last_checked_at)}</span><span>会话更新：${when(account.updated_at)}</span>${hint}</div><div class="copy" data-copy="${esc(account.account_id)}" title="点击复制账号 ID">账号 ID：${esc(account.account_id)}</div></div><div class="account-actions"><button data-action="check" data-id="${esc(account.account_id)}">检查</button><button class="danger" data-action="relogin" data-id="${esc(account.account_id)}">重新登录</button></div></article>`;}
+    function render(data){const {service,accounts}=data;$('service-status').textContent=service.status==='ok'?'运行中':'异常';$('service-detail').textContent='HTTP 服务正常 · '+service.version;$('active-count').textContent=accounts.active+' / '+accounts.total;$('account-detail').textContent='抖音 '+accounts.douyin+' · 小红书 '+accounts.xhs;$('relogin-count').textContent=accounts.needs_login;$('interval').textContent=elapsed(service.check_interval_seconds);$('uptime').textContent='已运行 '+elapsed(service.uptime_seconds);$('listen-address').textContent=service.listen_address;$('data-dir').textContent=service.data_dir;$('started-at').textContent=when(service.started_at);$('accounts').innerHTML=accounts.items.length?accounts.items.map(accountCard).join(''):'<div class="empty">尚无登录账号。请使用下方按钮打开隔离浏览器并完成登录。</div>';$('last-refresh').textContent=new Date().toLocaleTimeString('zh-CN');}
+    async function refresh(silent=false){try{const data=await request('/api/v1/dashboard');render(data);if(!silent)notice('状态已刷新。','ok');}catch(error){notice(error.message,'error');$('service-status').textContent='不可用';}}
+    async function action(button){const id=button.dataset.id;const relogin=button.dataset.action==='relogin';button.disabled=true;try{const result=await request('/api/v1/accounts/'+encodeURIComponent(id)+'/'+(relogin?'relogin':'check'),{method:'POST'});notice(result.message||(relogin?'已打开隔离登录窗口。':'账号检查已完成。'),'ok');await refresh(true);}catch(error){notice(error.message,'error');}finally{button.disabled=false;}}
+    $('accounts').addEventListener('click',async event=>{const button=event.target.closest('button[data-action]');if(button)return action(button);const copy=event.target.closest('[data-copy]');if(copy){try{await navigator.clipboard.writeText(copy.dataset.copy);notice('账号 ID 已复制。','ok');}catch{notice('无法访问剪贴板。','error');}}});
+    $('refresh').addEventListener('click',()=>refresh());$('check-all').addEventListener('click',async event=>{event.currentTarget.disabled=true;try{const result=await request('/api/v1/accounts/check-all',{method:'POST'});notice('已检查 '+result.checked+' 个有效账号。','ok');await refresh(true);}catch(error){notice(error.message,'error');}finally{event.currentTarget.disabled=false;}});
+    $('login-form').addEventListener('submit',async event=>{event.preventDefault();const button=event.currentTarget.querySelector('button');button.disabled=true;try{const result=await request('/api/v1/accounts/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({platform:$('platform').value,label:$('label').value})});notice(result.message||'已打开隔离登录窗口。','ok');$('label').value='';await refresh(true);}catch(error){notice(error.message,'error');}finally{button.disabled=false;}});
+    $('resolve-form').addEventListener('submit',async event=>{event.preventDefault();const button=event.currentTarget.querySelector('button');button.disabled=true;try{const body={url:$('xhs-url').value};if($('xhs-account').value)body.account_id=$('xhs-account').value;const result=await request('/api/v1/xhs/resolve-link',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});notice('已解析：user_id='+(result.user_id||'—')+'；note_id='+(result.note_id||'—')+'。','ok');}catch(error){notice(error.message,'error');}finally{button.disabled=false;}});
+    refresh(true);setInterval(()=>refresh(true),15000);
+  </script>
+</body>
+</html>"""

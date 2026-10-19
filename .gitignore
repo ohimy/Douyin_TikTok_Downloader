@@ -1,0 +1,69 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Virtualenvs
+.venv/
+.venv-local/
+venv/
+env/
+
+# Tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Local config & secrets
+# Cookies and tokens are per-deployment; never commit them.
+.env
+.env.*
+!.env.example
+*.local.yaml
+*.local.yml
+/data/
+/local_api/xhs_assets/node_modules/
+/local_api/xhs_assets/package.json
+/local_api/xhs_assets/package-lock.json
+/local_api/xhs_assets/xhs_main_260411.js
+
+# Runtime output
+logs/
+*.log
+downloads/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+
+# 本地 AI 协作产物：留在工作区，不入库
+docs/
+CLAUDE.md
+AGENTS.md
+GEMINI.md
+.claude/
+.cursor/
+.cursorrules
+.aider*
+.github/copilot-instructions.md
+
+# Working copies of V4 sources, taken with `git show main:<path>` while porting.
+# Fully reproducible from the main branch, so they are not carried here; the
+# salvage list lives in docs/design/16-salvage-and-debug.md.
+vendor_salvage/
+
+# Node
+node_modules/
+dist/
+
+# Go build output. `go build` in docker/downloader drops the binary beside the
+# source; the image builds it from scratch, so a committed copy is 9 MB of
+# nothing and would be wrong for every architecture but the one that made it.
+/docker/downloader/downloader
+/Depoly_SSH/

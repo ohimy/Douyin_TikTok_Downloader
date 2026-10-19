@@ -1,0 +1,21 @@
+<!--
+  The project mark: braces from the 2022 logo, holding something on its way down.
+
+  Standalone, so it carries its own colours rather than currentColor: this file
+  is the README header and the favicon, and neither has the console's token
+  palette to inherit from. The two values are the accent and the base background
+  from web/src/styles/tokens.css; keep them in step if those change.
+
+  (No double hyphens in this comment. XML forbids them inside one, and an SVG
+  that browsers happen to tolerate still fails a strict parser.)
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Douyin_TikTok_Download_API">
+  <rect width="32" height="32" rx="7" fill="#0B0D10"/>
+  <g fill="none" stroke="#4CC9D9" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12.6 7.4c-2.4 0-2.4 2.3-2.4 4.3 0 2.2-2.3 3.5-3.5 4v.6c1.2.5 3.5 1.8 3.5 4 0 2 0 4.3 2.4 4.3"/>
+    <path d="M19.4 7.4c2.4 0 2.4 2.3 2.4 4.3 0 2.2 2.3 3.5 3.5 4v.6c-1.2.5-3.5 1.8-3.5 4 0 2 0 4.3-2.4 4.3"/>
+    <path d="M16 10.9v7.3"/>
+    <path d="M13.2 15.5 16 18.3l2.8-2.8"/>
+    <path d="M13.5 21.6h5"/>
+  </g>
+</svg>
