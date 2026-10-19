@@ -9,9 +9,11 @@ from __future__ import annotations
 
 import asyncio
 import importlib.util
+import ipaddress
 import json
 import os
 import secrets
+import socket
 import sys
 import tempfile
 import time
@@ -24,7 +26,7 @@ from typing import Any, Literal
 from urllib.parse import parse_qs, quote, urlparse
 
 import httpx
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field, field_validator
@@ -364,6 +366,42 @@ def default_data_dir() -> Path:
     if getattr(sys, "frozen", False):
         return Path(sys.executable).resolve().parent / "data"
     return Path.cwd() / "data"
+
+
+def _intranet_addresses(port: int, listen_host: str) -> list[str]:
+    """Return display-safe private IPv4 URLs reachable by other LAN devices.
+
+    Binding to ``0.0.0.0`` makes Uvicorn listen on every IPv4 interface, but it
+    is not an address a browser on another machine can open. Discover the
+    private addresses for the management panels instead.
+    """
+    normalized_host = listen_host.strip().strip("[]")
+    if normalized_host in {"127.0.0.1", "localhost", "::1"}:
+        return []
+
+    candidates: set[str] = set()
+    if normalized_host not in {"0.0.0.0", "::", ""}:
+        candidates.add(normalized_host)
+    else:
+        with suppress(OSError):
+            candidates.update(socket.gethostbyname_ex(socket.gethostname())[2])
+        with suppress(OSError):
+            for info in socket.getaddrinfo(socket.gethostname(), None, socket.AF_INET):
+                candidates.add(info[4][0])
+        # This UDP connect does not send a packet. It asks the OS which LAN
+        # interface would be used, covering Windows hosts with incomplete DNS.
+        with suppress(OSError):
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as probe:
+                probe.connect(("192.0.2.1", 80))
+                candidates.add(probe.getsockname()[0])
+
+    private_addresses: list[str] = []
+    for candidate in candidates:
+        with suppress(ValueError):
+            address = ipaddress.ip_address(candidate)
+            if address.version == 4 and address.is_private and not address.is_loopback and not address.is_link_local:
+                private_addresses.append(str(address))
+    return [f"http://{address}:{port}" for address in sorted(set(private_addresses))]
 
 
 def _cookie_map(cookie_header: str) -> dict[str, str]:
@@ -802,6 +840,8 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     app.state.started_at = datetime.now(timezone.utc)
     app.state.started_monotonic = time.monotonic()
     app.state.account_check_interval = max(int(os.getenv("DOUYIN_ACCOUNT_CHECK_SECONDS", "900")), 60)
+    app.state.listen_host = os.getenv("DOUYIN_LOCAL_API_HOST", "0.0.0.0")
+    app.state.listen_port = int(os.getenv("DOUYIN_LOCAL_API_PORT", "8787"))
     origins = [item.strip() for item in os.getenv("CORS_ALLOW_ORIGINS", "*").split(",") if item.strip()]
     app.add_middleware(
         CORSMiddleware,
@@ -891,7 +931,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         }
 
     @app.get("/api/v1/dashboard", tags=["system"])
-    async def dashboard_state(request: Request) -> dict[str, Any]:
+    async def dashboard_state() -> dict[str, Any]:
         """Return display-safe service and account state for the local dashboard."""
         accounts = files.list_accounts()
         return {
@@ -901,7 +941,8 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
                 "started_at": app.state.started_at.isoformat(),
                 "uptime_seconds": round(time.monotonic() - app.state.started_monotonic),
                 "check_interval_seconds": app.state.account_check_interval,
-                "listen_address": str(request.base_url).rstrip("/"),
+                "listen_address": f"http://{app.state.listen_host}:{app.state.listen_port}",
+                "intranet_addresses": _intranet_addresses(app.state.listen_port, app.state.listen_host),
                 "data_dir": str(files.data_dir),
             },
             "accounts": {

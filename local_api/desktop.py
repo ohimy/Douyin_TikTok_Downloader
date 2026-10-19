@@ -32,12 +32,13 @@ class NativeDashboard(ttk.Frame):
         self.api_base_url = api_base_url.rstrip("/")
         self.stop_server = stop_server
         self.accounts_by_row: dict[str, dict[str, Any]] = {}
+        self.intranet_urls: list[str] = []
         self.events: Queue[tuple[str, Any, Any]] = Queue()
         self.refresh_in_progress = False
         self.status_text = tk.StringVar(value="正在连接本地服务…")
         self.service_text = tk.StringVar(value="服务状态：启动中")
         self.metrics_text = tk.StringVar(value="账号：—")
-        self.listen_text = tk.StringVar(value=f"本机地址：{self.api_base_url}")
+        self.listen_text = tk.StringVar(value="内网地址：正在检测…")
         self.platform_var = tk.StringVar(value="douyin")
         self.label_var = tk.StringVar()
         self._build()
@@ -76,6 +77,7 @@ class NativeDashboard(ttk.Frame):
         ttk.Label(service, textvariable=self.service_text, style="Metric.TLabel").grid(row=0, column=0, sticky="w")
         ttk.Label(service, textvariable=self.metrics_text, style="Metric.TLabel").grid(row=0, column=1, sticky="w", padx=34)
         ttk.Label(service, textvariable=self.listen_text, style="Sub.TLabel").grid(row=1, column=0, columnspan=2, sticky="w", pady=(6, 0))
+        ttk.Button(service, text="复制内网面板地址", command=self.copy_intranet_dashboard_url).grid(row=0, column=2, rowspan=2, padx=(20, 0))
 
         accounts_frame = ttk.LabelFrame(self, text="账号状态", padding=10)
         accounts_frame.pack(fill="both", expand=True, pady=(0, 10))
@@ -191,7 +193,12 @@ class NativeDashboard(ttk.Frame):
         self.metrics_text.set(
             f"账号：{accounts.get('active', 0)} 已登录 / {accounts.get('total', 0)} 总计 · {accounts.get('needs_login', 0)} 需重登"
         )
-        self.listen_text.set(f"本机地址：{service.get('listen_address', self.api_base_url)} · 自动检查 {service.get('check_interval_seconds', '—')} 秒")
+        intranet = service.get("intranet_addresses", [])
+        self.intranet_urls = [url for url in intranet if isinstance(url, str)] if isinstance(intranet, list) else []
+        intranet_text = " / ".join(self.intranet_urls) if self.intranet_urls else "未检测到可用内网 IPv4 地址"
+        self.listen_text.set(
+            f"内网地址：{intranet_text} · 监听：{service.get('listen_address', self.api_base_url)} · 自动检查 {service.get('check_interval_seconds', '—')} 秒"
+        )
         for row in self.tree.get_children():
             self.tree.delete(row)
         self.accounts_by_row.clear()
@@ -275,6 +282,14 @@ class NativeDashboard(ttk.Frame):
 
     def open_url(self, path: str) -> None:
         webbrowser.open(self.api_base_url + path)
+
+    def copy_intranet_dashboard_url(self) -> None:
+        if not self.intranet_urls:
+            self.status_text.set("未检测到可复制的内网 IPv4 地址。")
+            return
+        self.root.clipboard_clear()
+        self.root.clipboard_append("\n".join(f"{url}/dashboard" for url in self.intranet_urls))
+        self.status_text.set("内网 Web 面板地址已复制到剪贴板。")
 
     def close(self) -> None:
         self.stop_server()
