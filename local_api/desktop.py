@@ -93,6 +93,7 @@ class NativeDashboard(ttk.Frame):
             self.tree.column(column, width=widths[column], minwidth=70, stretch=column == "message")
         self.tree.tag_configure("active", foreground="#147a45")
         self.tree.tag_configure("needs_login", foreground="#b33a3a")
+        self.tree.tag_configure("needs_verification", foreground="#a36b00")
         self.tree.tag_configure("unknown", foreground="#a36b00")
         self.tree.tag_configure("checking", foreground="#2463a8")
         scroll = ttk.Scrollbar(accounts_frame, orient="vertical", command=self.tree.yview)
@@ -213,14 +214,18 @@ class NativeDashboard(ttk.Frame):
                     values=(
                         self._platform_name(str(account.get("platform", "douyin"))),
                         account.get("nickname") or account.get("label") or "—",
-                        account.get("status", "unknown"),
+                        "需要验证" if account.get("status") == "needs_verification" else account.get("status", "unknown"),
                         self._format_time(account.get("last_checked_at")),
                         self._format_time(account.get("updated_at")),
                         account.get("last_error") or "—",
                     ),
                 )
                 self.accounts_by_row[row] = account
-        self.status_text.set(f"状态已刷新。服务启动：{self._format_time(service.get('started_at'))}")
+        strategies = service.get("xhs_read_strategy", {}).get("accounts", [])
+        browser_reads = sum(item.get("last_transport") == "browser" for item in strategies)
+        self.status_text.set(
+            f"状态已刷新 · 小红书自动切换：最近直接请求 {len(strategies) - browser_reads} / 浏览器 {browser_reads}"
+        )
         self.refresh_in_progress = False
 
     def refresh(self) -> None:

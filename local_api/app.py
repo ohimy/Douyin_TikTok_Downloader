@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import copy
+import hashlib
 import importlib.util
 import ipaddress
 import json
@@ -39,8 +40,11 @@ from local_api.xhs_runtime import (
     XhsClient,
     XhsRiskControlError,
     XhsRuntimeUnavailable,
+    XhsSessionExpiredError,
     XhsTokenRequiredError,
 )
+from local_api.xhs_browser import XhsBrowserReader, XhsBrowserUnavailable, XhsVerificationRequired
+from local_api.xhs_reader import XhsAutoReader
 from local_api.dashboard import DASHBOARD_HTML
 
 # These two modules are from the checked-out upstream project.  They are pure
@@ -359,26 +363,41 @@ class XhsReadCache:
     ) -> dict[str, Any]:
         now = time.monotonic()
         async with self._lock:
+            for expired_key, (expires_at, _) in list(self._entries.items()):
+                if expires_at <= now:
+                    self._entries.pop(expired_key, None)
             cached = self._entries.get(key)
             if cached and cached[0] > now:
                 return copy.deepcopy(cached[1])
             task = self._inflight.get(key)
-            owner = task is None
             if task is None:
-                task = asyncio.create_task(loader())
+                task = asyncio.create_task(self._load(key, ttl_seconds, loader))
+                task.add_done_callback(lambda done: None if done.cancelled() else done.exception())
                 self._inflight[key] = task
+        # A disconnected caller must not cancel a browser operation shared by
+        # another caller. The cache owns the task and its lifecycle.
+        return copy.deepcopy(await asyncio.shield(task))
 
+    async def _load(
+        self, key: str, ttl_seconds: float, loader: Callable[[], Awaitable[dict[str, Any]]]
+    ) -> dict[str, Any]:
         try:
-            result = await task
-        finally:
-            if owner:
-                async with self._lock:
-                    self._inflight.pop(key, None)
-
-        if owner and ttl_seconds > 0:
+            result = await loader()
             async with self._lock:
-                self._entries[key] = (time.monotonic() + ttl_seconds, copy.deepcopy(result))
-        return copy.deepcopy(result)
+                if ttl_seconds > 0:
+                    self._entries[key] = (time.monotonic() + ttl_seconds, copy.deepcopy(result))
+                    while len(self._entries) > 256:
+                        self._entries.pop(next(iter(self._entries)))
+            return result
+        finally:
+            async with self._lock:
+                self._inflight.pop(key, None)
+
+    async def close(self) -> None:
+        tasks = list(self._inflight.values())
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
 
     def status(self) -> dict[str, int | float]:
         now = time.monotonic()
@@ -794,6 +813,9 @@ class BrowserLoginManager:
         self._tasks: dict[str, asyncio.Task[None]] = {}
         self._xhs_resolution_locks: dict[str, asyncio.Lock] = {}
         self.on_login: Callable[[str], Awaitable[dict[str, Any]]] | None = None
+        self.before_profile_use: Callable[[str], Awaitable[None]] | None = None
+        self.before_locked_profile_use: Callable[[str], Awaitable[None]] | None = None
+        self.xhs_request_runner: Callable[..., Awaitable[Any]] | None = None
 
     _LOGIN_TARGETS: Mapping[str, tuple[str, tuple[str, ...]]] = {
         "douyin": (DOUYIN_ORIGIN, ("sessionid", "sessionid_ss")),
@@ -864,6 +886,8 @@ class BrowserLoginManager:
             await self.files.set_status(account_id, "logging_in")
         if account_id in self._tasks and not self._tasks[account_id].done():
             raise HTTPException(status_code=409, detail="This account already has a login window open")
+        if self.before_profile_use is not None:
+            await self.before_profile_use(account_id)
         self._tasks[account_id] = asyncio.create_task(self._run(account_id, platform))
         return {
             "account_id": account_id,
@@ -913,7 +937,12 @@ class BrowserLoginManager:
                         if candidate and _ % 15 == 0:
                             cookie = "; ".join(f"{name}={value}" for name, value in cookie_map.items())
                             try:
-                                await asyncio.to_thread(xhs_session_checker.check_session, cookie)
+                                async def probe() -> Any:
+                                    return await asyncio.to_thread(xhs_session_checker.check_session, cookie)
+                                if self.xhs_request_runner is not None:
+                                    await self.xhs_request_runner(probe)
+                                else:
+                                    await probe()
                             except Exception:
                                 # A visitor session or a not-yet-complete login
                                 # simply keeps the browser open for the user.
@@ -947,6 +976,13 @@ class BrowserLoginManager:
 
     async def resolve_xhs_link(self, url: str, account_id: str) -> str:
         """Open an XHS link with the existing isolated profile and return its final URL."""
+        lock = self._xhs_resolution_locks.setdefault(account_id, asyncio.Lock())
+        async with lock:
+            if self.before_locked_profile_use is not None:
+                await self.before_locked_profile_use(account_id)
+            return await self._resolve_xhs_link_unlocked(url, account_id)
+
+    async def _resolve_xhs_link_unlocked(self, url: str, account_id: str) -> str:
         account = self.files.account(account_id)
         if account is None or account.get("platform", "douyin") != "xhs":
             raise HTTPException(status_code=404, detail="Xiaohongshu account not found")
@@ -1182,6 +1218,11 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     xhs_request_gate = XhsRequestGate(files.data_dir / "xhs-risk-state.json")
     xhs_read_cache = XhsReadCache()
     logins = BrowserLoginManager(files)
+    xhs_browser = XhsBrowserReader(files, logins)
+    xhs_auto = XhsAutoReader(xhs_request_gate.run)
+    logins.before_profile_use = xhs_browser.close_account
+    logins.before_locked_profile_use = xhs_browser.close_account_locked
+    logins.xhs_request_runner = xhs_request_gate.run
     app = FastAPI(
         title="Douyin Local API",
         version="1.1.0",
@@ -1192,6 +1233,8 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     app.state.xhs_client = xhs_client
     app.state.xhs_request_gate = xhs_request_gate
     app.state.xhs_read_cache = xhs_read_cache
+    app.state.xhs_browser = xhs_browser
+    app.state.xhs_auto_reader = xhs_auto
     app.state.request_audit = request_audit
     app.state.started_at = datetime.now(timezone.utc)
     app.state.started_monotonic = time.monotonic()
@@ -1266,7 +1309,14 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
                 cookie = files.read_cookie(account_id, platform="xhs")
                 if not cookie:
                     raise RuntimeError("No saved session.")
-                user = await asyncio.to_thread(xhs_client.current_user, cookie)
+                user = await xhs_request_gate.run(lambda: asyncio.to_thread(xhs_client.current_user, cookie))
+            except XhsRequestCoolingDown:
+                # Frequency protection says nothing about whether the Cookie
+                # is logged in. Keep the account's previous usable state.
+                return (await files.set_status(
+                    account_id, str(account.get("status", "unknown")),
+                    error="小红书请求正在冷却，暂缓账号检查。",
+                )) or {}
             except Exception as exc:
                 message = str(exc)
                 auth_markers = ("-101", "-104", "登录", "unauthorized", "HTTP 401", "HTTP 403")
@@ -1318,6 +1368,12 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     @app.on_event("shutdown")
     async def stop_monitor() -> None:
         app.state.account_monitor.cancel()
+        with suppress(asyncio.CancelledError):
+            await app.state.account_monitor
+        for account_id in list(logins._tasks):
+            await logins.cancel(account_id)
+        await xhs_read_cache.close()
+        await xhs_browser.close()
 
     @app.get("/health", tags=["system"])
     async def health() -> dict[str, Any]:
@@ -1357,6 +1413,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
                 "check_interval_seconds": app.state.account_check_interval,
                 "xhs_request_pacing": xhs_request_gate.status(),
                 "xhs_response_cache": xhs_read_cache.status(),
+                "xhs_read_strategy": xhs_auto.status(),
                 "listen_address": f"http://{app.state.listen_host}:{app.state.listen_port}",
                 "intranet_addresses": _intranet_addresses(app.state.listen_port, app.state.listen_host),
                 "data_dir": str(files.data_dir),
@@ -1401,6 +1458,8 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     async def delete_account(account_id: str) -> dict[str, Any]:
         """Permanently remove a saved account and its local login artefacts."""
         await logins.cancel(account_id)
+        await xhs_browser.close_account(account_id)
+        xhs_auto.reset(account_id)
         account = await files.delete_account(account_id)
         if account is None:
             raise HTTPException(status_code=404, detail="Account not found")
@@ -1421,6 +1480,9 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     @app.post("/api/v1/cookies", tags=["configuration"])
     async def update_cookie(update: CookieUpdate) -> dict[str, Any]:
         """Atomically replace the cookie; its plaintext is never returned."""
+        if update.account_id:
+            await xhs_browser.close_account(update.account_id)
+            xhs_auto.reset(update.account_id)
         return {
             "message": "Cookie updated",
             "account": await files.replace_cookie(
@@ -1434,15 +1496,51 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
             raise HTTPException(status_code=409, detail="No active Xiaohongshu account is available")
         return cookie
 
-    async def xhs_call(account_id: str | None, operation: Any, *args: Any, **kwargs: Any) -> dict[str, Any]:
+    async def xhs_call(account_id: str | None, operation: str, identifier: str, **kwargs: Any) -> dict[str, Any]:
         selected_account_id = xhs_account_id(account_id)
-        try:
-            result = await xhs_request_gate.run(
-                lambda: asyncio.to_thread(
-                    operation, *args, xhs_cookie(selected_account_id), **kwargs
+        account = files.account(selected_account_id)
+        if account and account.get("status") in {"needs_verification", "logging_in"}:
+            raise HTTPException(status_code=409, detail="此账号需要完成验证或登录，请查看账号状态。")
+
+        async def direct_read() -> dict[str, Any]:
+            if operation == "note_detail" and not kwargs.get("xsec_token"):
+                # Let the page find/click a signed note card; do not send a
+                # known-invalid direct request merely to trigger fallback.
+                raise XhsTokenRequiredError()
+            try:
+                return await asyncio.to_thread(
+                    getattr(xhs_client, operation), identifier, xhs_cookie(selected_account_id), **kwargs
                 )
+            except XhsTokenRequiredError:
+                if operation == "note_detail":
+                    await files.delete_xhs_note_token(selected_account_id, identifier)
+                    kwargs["xsec_token"] = ""
+                raise
+
+        async def page_read() -> dict[str, Any]:
+            try:
+                async with asyncio.timeout(90):
+                    return await getattr(xhs_browser, operation)(selected_account_id, identifier, **kwargs)
+            except (XhsRiskControlError, XhsTokenRequiredError, XhsSessionExpiredError, RuntimeError, ValueError):
+                raise
+            except Exception as exc:
+                raise XhsBrowserUnavailable("小红书浏览器操作超时或页面结构发生变化。") from exc
+
+        try:
+            result = await xhs_auto.read(
+                selected_account_id, operation,
+                http=direct_read, browser=page_read,
+                browser_only=(
+                    str(kwargs.get("cursor", "")).startswith("pw_")
+                    or (operation == "note_detail" and not kwargs.get("xsec_token"))
+                ),
             )
         except XhsRequestCoolingDown as exc:
+            if isinstance(exc.__cause__, XhsVerificationRequired):
+                await files.set_status(
+                    selected_account_id, "needs_verification",
+                    error="小红书页面需要安全验证，请使用重新登录窗口完成验证。",
+                )
             upstream = f"（上游 HTTP {exc.upstream_status}）" if exc.upstream_status else ""
             raise HTTPException(
                 status_code=429,
@@ -1457,6 +1555,9 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
                 status_code=422,
                 detail="小红书拒绝了当前 xsec_token；请使用当前分享链接或重新获取笔记令牌。",
             ) from exc
+        except XhsSessionExpiredError as exc:
+            await files.set_status(selected_account_id, "needs_login", error=str(exc))
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
         except XhsRuntimeUnavailable as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
         except (RuntimeError, ValueError) as exc:
@@ -1494,31 +1595,11 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         selected_account_id = xhs_account_id(account_id)
 
         async def load_posts() -> dict[str, Any]:
-            if xsec_token:
-                token, source = xsec_token, xsec_source or "pc_user"
-            else:
-                # Logged-in user_posted accepts an empty token. Prefer it because it
-                # avoids a browser window and supports the requested ID-only API.
-                token, source = "", "pc_user"
-            try:
-                result = await xhs_call(
-                    selected_account_id, xhs_client.user_posts, user_id, cursor=cursor, count=count,
-                    xsec_token=token, xsec_source=source,
-                )
-            except HTTPException as exc:
-                # Most creator pages accept an empty token. If this specific page
-                # does not, retry once after silent, headless token resolution. An
-                # explicit caller token is never replaced or retried automatically.
-                if xsec_token or exc.status_code not in (422, 502):
-                    raise
-                fields = await logins.resolve_xhs_identifier_silently(
-                    "user", user_id, selected_account_id
-                )
-                token, source = fields["xsec_token"], fields["xsec_source"]
-                result = await xhs_call(
-                    selected_account_id, xhs_client.user_posts, user_id, cursor=cursor, count=count,
-                    xsec_token=token, xsec_source=source,
-                )
+            source = xsec_source or "pc_user"
+            result = await xhs_call(
+                selected_account_id, "user_posts", user_id, cursor=cursor, count=count,
+                xsec_token=xsec_token or "", xsec_source=source,
+            )
             items = result.get("items")
             if isinstance(items, list):
                 await files.cache_xhs_note_tokens(selected_account_id, items, source=source)
@@ -1532,7 +1613,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
             return result
 
         return await xhs_read_cache.get_or_load(
-            f"posts:{selected_account_id}:{user_id}:{cursor}:{count}",
+            f"posts:{selected_account_id}:{hashlib.sha256(xhs_cookie(selected_account_id).encode()).hexdigest()}:{user_id}:{cursor}:{count}",
             ttl_seconds=xhs_read_cache.posts_ttl_seconds,
             loader=load_posts,
         )
@@ -1544,7 +1625,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         xsec_source: Literal["pc_search", "pc_user", "pc_feed"] | None = None,
         account_id: str | None = Query(default=None, max_length=64),
     ) -> dict[str, Any]:
-        """Return detail without ever opening a browser for an API request."""
+        """Read through the automatically selected HTTP or persistent page reader."""
         selected_account_id = xhs_account_id(account_id)
 
         async def load_note() -> dict[str, Any]:
@@ -1552,33 +1633,16 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
             if xsec_token:
                 token, source = xsec_token, xsec_source or "pc_user"
             elif cached is None:
-                fields = await logins.resolve_xhs_identifier_silently(
-                    "note", note_id, selected_account_id
-                )
-                token, source = fields["xsec_token"], fields["xsec_source"]
+                token, source = "", "pc_user"
             else:
                 token, source = cached
-            try:
-                return await xhs_call(
-                    selected_account_id, xhs_client.note_detail, note_id,
-                    xsec_token=token, xsec_source=source,
-                )
-            except HTTPException as exc:
-                # A cached token can expire independently of the Cookie. Drop
-                # it and resolve once more; never loop or replace caller input.
-                if xsec_token or cached is None or exc.status_code != 422:
-                    raise
-                await files.delete_xhs_note_token(selected_account_id, note_id)
-                fields = await logins.resolve_xhs_identifier_silently(
-                    "note", note_id, selected_account_id
-                )
-                return await xhs_call(
-                    selected_account_id, xhs_client.note_detail, note_id,
-                    xsec_token=fields["xsec_token"], xsec_source=fields["xsec_source"],
-                )
+            return await xhs_call(
+                selected_account_id, "note_detail", note_id,
+                xsec_token=token, xsec_source=source,
+            )
 
         return await xhs_read_cache.get_or_load(
-            f"note:{selected_account_id}:{note_id}",
+            f"note:{selected_account_id}:{hashlib.sha256(xhs_cookie(selected_account_id).encode()).hexdigest()}:{note_id}",
             ttl_seconds=xhs_read_cache.notes_ttl_seconds,
             loader=load_note,
         )

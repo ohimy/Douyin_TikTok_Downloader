@@ -54,6 +54,10 @@ class XhsTokenRequiredError(RuntimeError):
         super().__init__(f"Xiaohongshu needs a fresh xsec_token{detail}")
 
 
+class XhsSessionExpiredError(RuntimeError):
+    """The session must be renewed before either transport can continue."""
+
+
 class XhsClient:
     """Synchronous signed XHS client; API handlers run it in a worker thread."""
 
@@ -130,6 +134,8 @@ class XhsClient:
             # API layer applies a shared cooldown before accepting more work.
             if response.status_code in (429, 461, 471):
                 raise XhsRiskControlError(response.status_code)
+            if response.status_code in (401, 403):
+                raise XhsSessionExpiredError("小红书登录态失效或账号无访问权限，请重新登录。")
             payload = response.json()
         except requests.RequestException as exc:
             raise RuntimeError(f"Could not reach Xiaohongshu: {exc}") from exc
@@ -152,6 +158,8 @@ class XhsClient:
                 raise XhsRiskControlError(200, code)
             if str(code) == "300031":
                 raise XhsTokenRequiredError(code)
+            if str(code) in {"-100", "-101", "-104"}:
+                raise XhsSessionExpiredError("小红书登录态失效或账号无访问权限，请重新登录。")
             message = payload.get("msg") or "Xiaohongshu rejected the request"
             raise RuntimeError(f"Xiaohongshu error {code}: {message}")
 
@@ -175,12 +183,22 @@ class XhsClient:
             "xsec_source": xsec_source,
         })
         payload = self._request("GET", f"/api/sns/web/v1/user_posted?{query}", cookie_header)
-        self._reject_if_failed(payload)
+        return self.parse_posts(payload)
+
+    @staticmethod
+    def parse_posts(payload: dict[str, Any]) -> dict[str, Any]:
+        """Normalize the same upstream response for HTTP and browser reads."""
+        XhsClient._reject_if_failed(payload)
         data = payload.get("data")
         if not isinstance(data, dict):
             raise RuntimeError("Xiaohongshu response has no post list")
+        notes = data.get("notes")
+        if not isinstance(notes, list):
+            raise RuntimeError("Xiaohongshu response has an invalid post list")
+        if data.get("has_more") and data.get("cursor") is None:
+            raise RuntimeError("Xiaohongshu response has no pagination cursor")
         return {
-            "items": data.get("notes", []),
+            "items": notes,
             "cursor": str(data["cursor"]) if data.get("has_more") and data.get("cursor") is not None else None,
             "has_more": bool(data.get("has_more")),
         }
@@ -196,7 +214,11 @@ class XhsClient:
                 "xsec_token": xsec_token,
             },
         )
-        self._reject_if_failed(payload)
+        return self.parse_note(payload)
+
+    @staticmethod
+    def parse_note(payload: dict[str, Any]) -> dict[str, Any]:
+        XhsClient._reject_if_failed(payload)
         data = payload.get("data")
         if not isinstance(data, dict):
             raise RuntimeError("Xiaohongshu response has no note detail")
