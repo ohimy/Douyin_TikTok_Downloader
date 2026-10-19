@@ -36,12 +36,12 @@ Windows 机器需要安装 Google Chrome 或 Microsoft Edge。Windows exe 启动
 
 ## 请求日志
 
-服务会将业务 API 的请求元数据写入 `data/logs/requests.jsonl`，并在 Web 管理面板的“最近请求”区域展示。每条记录只含 UTC 时间、请求 ID、客户端 IP、HTTP 方法、**路由模板**、状态码与耗时。Cookie、请求头、请求体、查询参数、账号 ID、作品 ID 和 `xsec_token` 都不会写入日志；仪表盘轮询、健康检查和日志读取接口也不会污染业务日志。
+服务会将业务 API 的请求元数据写入 `data/logs/requests.jsonl`，并在 Web 管理面板的“最近请求”区域展示。每条记录包含 UTC 时间、请求 ID、客户端 IP、HTTP 方法、**包含实际用户 / 作品 ID 的请求路径与地址**、状态码及耗时。例如显示 `http://192.168.1.10:8787/api/v1/xhs/notes/实际笔记ID`，而不是 `/api/v1/xhs/notes/{note_id}`。Cookie、请求头、请求体、查询参数和 `xsec_token` 不会写入日志；仪表盘轮询、健康检查和日志读取接口也不会污染业务日志。
 
-当前日志文件达到 5 MiB 时自动轮转，保留当前文件及最多 5 个历史文件。可从受信任内网调用：
+内存、日志文件、日志 API 与面板均只保留 / 返回最近 **100 条**，按最新优先显示；超出自动淘汰。旧版轮转日志会在启动时合并裁剪为最近 100 条并清理旧轮转文件。旧记录没有保存的实际 ID 无法补回，新请求会记录真实地址。可从受信任内网调用（`limit` 默认为 100，允许 1–100）：
 
 ```bash
-curl "http://127.0.0.1:8787/api/v1/logs/requests?limit=50"
+curl "http://127.0.0.1:8787/api/v1/logs/requests?limit=100"
 ```
 
 ## Windows 生成 exe

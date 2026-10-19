@@ -165,14 +165,14 @@ class RequestAuditLog:
     without adding a database dependency.
     """
 
-    max_bytes = 5 * 1024 * 1024
-    backup_count = 5
+    max_records = 100
     _fields = (
         "timestamp",
         "request_id",
         "client_ip",
         "method",
         "path",
+        "url",
         "status_code",
         "duration_ms",
     )
@@ -181,53 +181,72 @@ class RequestAuditLog:
         self.log_dir = data_dir / "logs"
         self.path = self.log_dir / "requests.jsonl"
         self._lock = threading.Lock()
+        self._entries: deque[dict[str, Any]] = deque(maxlen=self.max_records)
         self.log_dir.mkdir(parents=True, exist_ok=True)
+        self._restore_and_trim()
 
-    def _rotate_locked(self) -> None:
-        for index in range(self.backup_count - 1, 0, -1):
-            source = self.path.with_name(f"{self.path.name}.{index}")
-            if source.exists():
-                os.replace(source, self.path.with_name(f"{self.path.name}.{index + 1}"))
-        if self.path.exists():
-            os.replace(self.path, self.path.with_name(f"{self.path.name}.1"))
+    def _restore_and_trim(self) -> None:
+        """Migrate the old rotating logs once, retaining only the newest 100."""
+        backups = [self.path.with_name(f"{self.path.name}.{index}") for index in range(5, 0, -1)]
+        existing = False
+        with self._lock:
+            for path in [*backups, self.path]:
+                if not path.exists():
+                    continue
+                existing = True
+                try:
+                    with path.open("r", encoding="utf-8", errors="replace") as source:
+                        for line in source:
+                            try:
+                                entry = json.loads(line)
+                            except json.JSONDecodeError:
+                                continue
+                            if isinstance(entry, Mapping):
+                                self._entries.append({field: entry.get(field) for field in self._fields})
+                except OSError:
+                    # Never delete a backup that could not be imported.
+                    return
+            if existing:
+                try:
+                    self._persist_locked()
+                    # The retained entries have been committed atomically.
+                    # Older copies must not remain in historical rotations.
+                    for path in backups:
+                        path.unlink(missing_ok=True)
+                except OSError:
+                    return
+
+    def _persist_locked(self) -> None:
+        temp_name: str | None = None
+        try:
+            with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=self.log_dir, delete=False) as target:
+                temp_name = target.name
+                for entry in self._entries:
+                    target.write(json.dumps(entry, ensure_ascii=False, separators=(",", ":")) + "\n")
+                target.flush()
+                os.fsync(target.fileno())
+            os.replace(temp_name, self.path)
+        finally:
+            if temp_name is not None:
+                with suppress(OSError):
+                    Path(temp_name).unlink(missing_ok=True)
 
     def record(self, entry: Mapping[str, Any]) -> None:
-        """Append one metadata-only entry and rotate bounded local files."""
+        """Store the newest 100 requests both in memory and on disk."""
         safe_entry = {field: entry.get(field) for field in self._fields}
-        encoded = json.dumps(safe_entry, ensure_ascii=False, separators=(",", ":"))
         with self._lock:
+            self._entries.append(safe_entry)
             try:
-                if self.path.exists() and self.path.stat().st_size + len(encoded.encode("utf-8")) + 1 > self.max_bytes:
-                    self._rotate_locked()
-                with self.path.open("a", encoding="utf-8") as log_file:
-                    log_file.write(encoded + "\n")
+                self._persist_locked()
             except OSError:
                 # Observability must never make the business API unavailable,
                 # e.g. when a user temporarily has no free disk space.
                 return
 
     def recent(self, limit: int) -> list[dict[str, Any]]:
-        """Return newest metadata-only entries, including rotated files if needed."""
+        """Return at most 100 entries, newest first."""
         with self._lock:
-            records: list[dict[str, Any]] = []
-            paths = [self.path, *(self.path.with_name(f"{self.path.name}.{index}") for index in range(1, self.backup_count + 1))]
-            for path in paths:
-                if len(records) >= limit:
-                    break
-                try:
-                    lines = deque(path.open("r", encoding="utf-8"), maxlen=limit - len(records))
-                except OSError:
-                    continue
-                for line in reversed(lines):
-                    try:
-                        parsed = json.loads(line)
-                    except json.JSONDecodeError:
-                        continue
-                    if isinstance(parsed, Mapping):
-                        records.append({field: parsed.get(field) for field in self._fields})
-                        if len(records) >= limit:
-                            break
-            return records
+            return [dict(entry) for entry in reversed(self._entries)][:max(0, min(limit, self.max_records))]
 
 
 class XhsRequestCoolingDown(RuntimeError):
@@ -1264,13 +1283,6 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         "/api/v1/logs/requests",
     }
 
-    def audit_path(request: Request) -> str:
-        route = request.scope.get("route")
-        template = getattr(route, "path", None)
-        # Route templates preserve useful IDs structurally without persisting
-        # the caller-provided path values. Unknown paths stay anonymous too.
-        return template if isinstance(template, str) else "<unmatched>"
-
     @app.middleware("http")
     async def audit_request(request: Request, call_next: Callable[[Request], Awaitable[Any]]) -> Any:
         started = time.perf_counter()
@@ -1290,7 +1302,10 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
                         "request_id": request_id,
                         "client_ip": str(client_host)[:64],
                         "method": request.method,
-                        "path": audit_path(request),
+                        "path": request_path,
+                        # Keep actual path IDs and the address used by this
+                        # caller, while omitting query parameters and tokens.
+                        "url": str(request.url.replace(query="", fragment="")),
                         "status_code": response.status_code if response is not None else 500,
                         "duration_ms": round((time.perf_counter() - started) * 1000, 2),
                     }
@@ -1390,13 +1405,12 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         }
 
     @app.get("/api/v1/logs/requests", tags=["system"])
-    async def request_logs(limit: int = Query(default=50, ge=1, le=200)) -> dict[str, Any]:
+    async def request_logs(limit: int = Query(default=100, ge=1, le=100)) -> dict[str, Any]:
         """Return recent local request metadata without credentials or payloads."""
         return {
             "items": request_audit.recent(limit),
             "retention": {
-                "current_file_max_bytes": request_audit.max_bytes,
-                "backup_files": request_audit.backup_count,
+                "max_records": request_audit.max_records,
             },
         }
 
