@@ -1155,10 +1155,25 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
             # Logged-in user_posted accepts an empty token. Prefer it because it
             # avoids a browser window and supports the requested ID-only API.
             token, source = "", "pc_user"
-        result = await xhs_call(
-            selected_account_id, xhs_client.user_posts, user_id, cursor=cursor, count=count,
-            xsec_token=token, xsec_source=source,
-        )
+        try:
+            result = await xhs_call(
+                selected_account_id, xhs_client.user_posts, user_id, cursor=cursor, count=count,
+                xsec_token=token, xsec_source=source,
+            )
+        except HTTPException as exc:
+            # Most creator pages accept an empty token. If this specific page
+            # does not, retry once after silent, headless token resolution. An
+            # explicit caller token is never replaced or retried automatically.
+            if xsec_token or exc.status_code != 502:
+                raise
+            fields = await logins.resolve_xhs_identifier_silently(
+                "user", user_id, selected_account_id
+            )
+            token, source = fields["xsec_token"], fields["xsec_source"]
+            result = await xhs_call(
+                selected_account_id, xhs_client.user_posts, user_id, cursor=cursor, count=count,
+                xsec_token=token, xsec_source=source,
+            )
         items = result.get("items")
         if isinstance(items, list):
             await files.cache_xhs_note_tokens(selected_account_id, items, source=source)
