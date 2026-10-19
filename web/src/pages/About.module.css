@@ -1,0 +1,229 @@
+/*
+ * The about page: identity, licence, and the one sponsor who paid to be here.
+ */
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  flex: none;
+  border-radius: var(--radius);
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  color: var(--accent);
+}
+
+.projectName {
+  margin: 0;
+  font-size: var(--text-lg);
+  line-height: var(--leading-lg);
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.links a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.links a:hover {
+  color: var(--accent);
+}
+
+/* The three obligations, as a list rather than a paragraph: they are things to
+   check against, and a reader scanning for "do I have to do this" should not
+   have to parse prose to find out. */
+.terms {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding-inline-start: var(--space-5);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/*
+ * Contact routes, as a definition list: each is a label and an address, and the
+ * note beside each one says when to use it rather than the other. A row of
+ * links would have made them look interchangeable, which is the one thing they
+ * are not.
+ */
+.contact {
+  display: grid;
+  grid-template-columns: minmax(6rem, auto) 1fr;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  align-items: baseline;
+}
+
+.contact dt {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-muted);
+}
+
+.contact dd {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  min-width: 0;
+}
+
+.contact dd a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.contact dd a:hover {
+  color: var(--accent);
+}
+
+/* On a phone the label sits above its address rather than beside it: a 6rem
+   first column leaves an email nowhere to go. */
+@media (max-width: 599px) {
+  .contact {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+
+  .contact dt {
+    margin-top: var(--space-3);
+  }
+}
+
+/*
+ * Wallet addresses, network first.
+ *
+ * The chain leads because it is the part that has to be read: an address in the
+ * wrong network is lost money, and a reader scanning for "which of these is
+ * Solana" should not have to parse a 44-character string to find out. The
+ * addresses wrap rather than ellipsise for the same reason the ids elsewhere do
+ * - a prefix cannot be pasted.
+ */
+.wallets {
+  display: grid;
+  grid-template-columns: minmax(8rem, auto) 1fr;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  align-items: baseline;
+}
+
+.wallets dt {
+  font-size: var(--text-sm);
+  line-height: var(--leading-sm);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.wallets dd {
+  margin: 0;
+  min-width: 0;
+}
+
+@media (max-width: 599px) {
+  .wallets {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+
+  .wallets dt {
+    margin-top: var(--space-3);
+  }
+}
+
+/*
+ * The version in the page header, which is also the way in.
+ *
+ * Styled as the text it replaced rather than as a button: the point is that it
+ * does not advertise itself. It keeps a focus ring and a hover, because
+ * something clickable that gives the keyboard no sign of it is a worse idea
+ * than no easter egg at all.
+ */
+.version {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  padding: 2px var(--space-1);
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+}
+
+.version:hover {
+  border-color: var(--border-subtle);
+}
+
+.version:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.egg {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+  flex-wrap: wrap;
+}
+
+/* The mark, at the size it is drawn for. `pre` keeps the full-width spaces the
+   cat is built out of; anything that collapses whitespace flattens it. */
+.cat {
+  margin: 0;
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.15;
+  color: var(--text-muted);
+  white-space: pre;
+}
+
+.shields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.shields img {
+  display: block;
+  height: 20px;
+}
+
+@media (max-width: 767px) {
+  .egg {
+    gap: var(--space-3);
+  }
+
+  .cat {
+    font-size: 10px;
+  }
+}

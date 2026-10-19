@@ -1,0 +1,236 @@
+/*
+ * Downloads.
+ *
+ * The storage tiles come first because the number that matters on this page is
+ * how full the disk is, not how many rows the table has: everything else here
+ * is reversible, and running out of space is not.
+ */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* The platform under the id: two facts, one column, no extra header. */
+.sub {
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--text-muted);
+}
+
+/*
+ * The file list in the detail drawer. Deliberately without a link on the name:
+ * the path is what an operator needs, and offering to open the file would make
+ * this API the media proxy the design rules out.
+ */
+.files {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.file {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.file:last-child {
+  border-bottom: 0;
+}
+
+/* An ordinary link, styled as one: the browser's own download handling is what
+ * this is for, so anything that looks like a button would be a lie about what
+ * clicking it does. */
+.open {
+  font-size: var(--text-xs);
+  color: var(--accent);
+  text-decoration: none;
+  align-self: flex-start;
+}
+
+.open:hover {
+  text-decoration: underline;
+}
+
+/* A cover in the row, so the table says which post rather than which uuid.
+ * Fixed box with a placeholder ground, because a column that changes width as
+ * thumbnails load is worse than one that never had them. */
+.thumb {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 42px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg-inset);
+  border: 1px solid var(--border-subtle);
+}
+
+.thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Same element for a video and for an image post's cover: what the drawer is
+ * for is seeing what was kept, and an image post kept an image. */
+.player {
+  width: 100%;
+  max-height: 52vh;
+  border-radius: var(--radius);
+  background: var(--bg-base);
+  display: block;
+  object-fit: contain;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Starting one                                                                */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * platform | id | button, with the button on the control row rather than the
+ * label row.
+ *
+ * `align-items: end` is what does it: every Field is a column of label,
+ * control and optional help text, and ending them together puts the three
+ * controls on one line whatever is written above or below them.
+ */
+/* Only the columns; u-form-row owns the rows and the alignment. */
+.startForm {
+  grid-template-columns: minmax(140px, auto) minmax(0, 1fr) auto;
+}
+
+.startNote {
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-xs);
+  line-height: var(--leading-xs);
+  color: var(--text-muted);
+}
+
+/* The two secondary things the same input can do: save the post's comments, or
+   queue everything its author has posted. On the same card because they take
+   the identical input, and splitting them off would ask for the link twice. */
+.moreActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* -------------------------------------------------------------------------- */
+/* What this page can fetch                                                    */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * A row of buttons, one of which is on.
+ *
+ * It was a segmented control - a tinted strip with the selected tile a shade
+ * lighter - and it did not read as clickable, because on this palette it
+ * barely read at all. The selected tile measured 1.08:1 against the strip, and
+ * every neighbouring surface token sits within 1.15:1 of every other, so no
+ * choice of background alone can carry the state. It has to be colour.
+ *
+ * So each tab carries its own border at rest, which is what makes a thing look
+ * pressable, and the selected one is filled with the accent: 9.9:1 against the
+ * card in dark and 4.8:1 in light, with its label 9.9:1 and 4.9:1 on the fill.
+ * The enclosing strip is gone - a bordered button inside a bordered strip is a
+ * box in a box.
+ */
+.modes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.mode {
+  padding: var(--space-1) var(--space-3);
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-raised);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-1) var(--ease),
+    border-color var(--duration-1) var(--ease),
+    color var(--duration-1) var(--ease);
+}
+
+.mode:hover:not([aria-selected='true']) {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.mode[aria-selected='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: var(--weight-medium);
+}
+
+.mode:focus-visible {
+  outline: var(--focus-ring-width) solid var(--accent);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.startOptions {
+  margin-top: var(--space-3);
+}
+
+/* The depth menu sizes to its longest option rather than to the card. */
+.depthField {
+  max-width: 260px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Progress                                                                    */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * By files, not by bytes. The platform declares a size and the sidecar does
+ * not trust it - the ceiling is enforced on bytes actually written - so there
+ * is no denominator. Files done out of files planned is a real fraction; the
+ * bytes sit beside it as the number that keeps moving.
+ */
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.progressTrack {
+  display: block;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--bg-inset);
+  overflow: hidden;
+}
+
+.progressFill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+  transition: width var(--duration-2, 200ms) var(--ease);
+}

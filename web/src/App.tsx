@@ -1,0 +1,286 @@
+import { lazy, Suspense, useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { Redirect, Route, Switch, useLocation } from 'wouter'
+
+import {
+  Button,
+  Drawer,
+  ErrorBoundary,
+  ErrorState,
+  Konami,
+  LanguageSwitcher,
+  PageHeader,
+  DemoNotice,
+  Sidebar,
+  UpdateNotice,
+  Skeleton,
+  ThemeToggle,
+  ToastProvider,
+  TopBar,
+} from '@/components'
+import styles from '@/components/shell.module.css'
+import { setUnauthenticatedHandler } from '@/lib/api'
+import { cn } from '@/lib/cn'
+import { createQueryClient } from '@/lib/query'
+import { useIsMobile } from '@/hooks/useMediaQuery'
+import { useLocalStorageState } from '@/hooks/useLocalStorageState'
+import { useSetupStatus } from '@/hooks/useSetupStatus'
+
+// Every page is code-split: the console is served from the api container, and a
+// single bundle would make the first paint wait for the Swagger page.
+const Setup = lazy(() => import('@/pages/Setup'))
+const Login = lazy(() => import('@/pages/Login'))
+const Overview = lazy(() => import('@/pages/Overview'))
+const Identities = lazy(() => import('@/pages/Identities'))
+const Proxies = lazy(() => import('@/pages/Proxies'))
+const ApiKeys = lazy(() => import('@/pages/ApiKeys'))
+const Scheduler = lazy(() => import('@/pages/Scheduler'))
+const EndpointAccess = lazy(() => import('@/pages/EndpointAccess'))
+const Tools = lazy(() => import('@/pages/Tools'))
+const Library = lazy(() => import('@/pages/Library'))
+const Downloads = lazy(() => import('@/pages/Downloads'))
+const Watchlist = lazy(() => import('@/pages/Watchlist'))
+const Playground = lazy(() => import('@/pages/Playground'))
+const Logs = lazy(() => import('@/pages/Logs'))
+const Settings = lazy(() => import('@/pages/Settings'))
+const Notifications = lazy(() => import('@/pages/Notifications'))
+const System = lazy(() => import('@/pages/System'))
+const Diagnose = lazy(() => import('@/pages/Diagnose'))
+const Backup = lazy(() => import('@/pages/Backup'))
+const Users = lazy(() => import('@/pages/Users'))
+const ApiDocs = lazy(() => import('@/pages/ApiDocs'))
+const About = lazy(() => import('@/pages/About'))
+const Mcp = lazy(() => import('@/pages/Mcp'))
+
+const queryClient = createQueryClient()
+
+function PageFallback() {
+  return (
+    <div className="u-stack">
+      <Skeleton width={220} height={24} />
+      <Skeleton width={420} height={14} />
+      <Skeleton height={220} radius="var(--radius-lg)" />
+    </div>
+  )
+}
+
+function NotFound() {
+  const { t } = useTranslation('console')
+  return (
+    <>
+      <PageHeader title={t('page.notFound.title')} description={t('page.notFound.description')} />
+      <Button
+        variant="secondary"
+        onClick={() => {
+          window.location.assign('/')
+        }}
+      >
+        {t('page.notFound.action')}
+      </Button>
+    </>
+  )
+}
+
+function ConsoleRoutes() {
+  return (
+    <Suspense fallback={<PageFallback />}>
+      <Switch>
+        <Route path="/" component={Overview} />
+        <Route path="/identities" component={Identities} />
+        <Route path="/proxies" component={Proxies} />
+        <Route path="/api-keys" component={ApiKeys} />
+        <Route path="/scheduler" component={Scheduler} />
+        <Route path="/endpoint-access" component={EndpointAccess} />
+        <Route path="/playground" component={Playground} />
+        {/* The parse tool is a mode of the downloads page now. Kept as a
+            redirect rather than dropped: this path has been in the nav
+            for the life of v5 and is in people's bookmarks. */}
+        <Route path="/parse">
+          <Redirect to="/downloads" />
+        </Route>
+        <Route path="/tools" component={Tools} />
+        <Route path="/library" component={Library} />
+        <Route path="/downloads" component={Downloads} />
+        <Route path="/watchlist" component={Watchlist} />
+        <Route path="/logs" component={Logs} />
+        <Route path="/settings" component={Settings} />
+        <Route path="/notifications" component={Notifications} />
+        <Route path="/system" component={System} />
+        <Route path="/diagnose" component={Diagnose} />
+        <Route path="/backup" component={Backup} />
+        <Route path="/users" component={Users} />
+        <Route path="/docs" component={ApiDocs} />
+        <Route path="/mcp-guide" component={Mcp} />
+        <Route path="/about" component={About} />
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
+  )
+}
+
+/** 240px sidebar (56px collapsed), sticky top bar, 1440px content column. */
+function Shell() {
+  const { t } = useTranslation('common')
+  const isMobile = useIsMobile()
+  const [collapsed, setCollapsed] = useLocalStorageState('sidebar.collapsed', false)
+  const [navOpen, setNavOpen] = useState(false)
+  const [location] = useLocation()
+
+  // A route change closes the mobile drawer; otherwise it covers the page it
+  // just navigated to.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- closing the mobile drawer is a reaction to navigation, not derivable from it
+    setNavOpen(false)
+  }, [location])
+
+  return (
+    <div className={cn(styles.shell, collapsed && styles.shellCollapsed)}>
+      <a className={styles.skipLink} href="#main">
+        {t('nav.skipToContent')}
+      </a>
+
+      <Sidebar
+        collapsed={collapsed}
+        onToggleCollapse={() => {
+          setCollapsed((value) => !value)
+        }}
+      />
+
+      {/* Two seconds of stars for anyone who still remembers the sequence.
+          Mounted on the shell so it works from any page, and rendering null
+          until it fires - there is no listener cost worth measuring and no
+          element in the tree. */}
+      <Konami />
+
+      {isMobile ? (
+        <Drawer
+          open={navOpen}
+          onClose={() => {
+            setNavOpen(false)
+          }}
+          side="start"
+          title={t('app.console')}
+        >
+          <Sidebar
+            embedded
+            onNavigate={() => {
+              setNavOpen(false)
+            }}
+          />
+        </Drawer>
+      ) : null}
+
+      <div className={styles.main}>
+        <TopBar
+          onOpenNav={() => {
+            setNavOpen(true)
+          }}
+        />
+        <main className={styles.content} id="main">
+          {/* Inside the scroll area rather than pinned above it: a visitor
+              needs to be told once, on arrival, not to have a strip of the
+              viewport taken from them on every page for the rest of the visit. */}
+          <DemoNotice />
+          <UpdateNotice />
+          <ErrorBoundary>
+            <ConsoleRoutes />
+          </ErrorBoundary>
+        </main>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Setup gate.
+ *
+ * While the instance has no administrator, every route redirects to the wizard
+ * (docs/design/06-api-auth-mcp.md). If the status call itself fails we fail open
+ * rather than bricking the console: a transport problem should not lock an
+ * operator out of the pages that would explain it.
+ */
+function Gate() {
+  const { t } = useTranslation('common')
+  const [location, navigate] = useLocation()
+  const status = useSetupStatus()
+
+  useEffect(() => {
+    setUnauthenticatedHandler(() => {
+      if (location !== '/login' && location !== '/setup') navigate('/login')
+    })
+    return () => {
+      setUnauthenticatedHandler(null)
+    }
+  }, [location, navigate])
+
+  if (status.isLoading) {
+    return (
+      <div className={styles.centered}>
+        <div className={cn(styles.centeredPanel, 'u-stack')}>
+          <Skeleton height={20} width={160} />
+          <Skeleton height={120} radius="var(--radius-lg)" />
+        </div>
+      </div>
+    )
+  }
+
+  if (status.isError && status.error.kind === 'network') {
+    // No shell renders behind this, so the switchers come along: an operator who
+    // cannot reach the API is stuck on this panel, and it is the last place to
+    // strand them in a language they do not read.
+    return (
+      <div className={styles.centered}>
+        <div className={cn(styles.centeredPanel, 'u-stack')}>
+          <div className="u-row-between">
+            <span className="u-mono u-secondary">{t('app.name')}</span>
+            <span className="u-row">
+              <LanguageSwitcher />
+              <ThemeToggle />
+            </span>
+          </div>
+          <ErrorState
+            error={status.error}
+            onRetry={() => {
+              void status.refetch()
+            }}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  const initialized = status.data?.initialized ?? true
+
+  if (!initialized && location !== '/setup') return <Redirect to="/setup" />
+
+  return (
+    <Switch>
+      <Route path="/setup">
+        <Suspense fallback={null}>
+          <Setup />
+        </Suspense>
+      </Route>
+      <Route path="/login">
+        <Suspense fallback={null}>
+          <Login />
+        </Suspense>
+      </Route>
+      <Route>
+        <Shell />
+      </Route>
+    </Switch>
+  )
+}
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <ErrorBoundary fullScreen>
+          <Gate />
+        </ErrorBoundary>
+      </ToastProvider>
+    </QueryClientProvider>
+  )
+}

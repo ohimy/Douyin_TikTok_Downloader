@@ -1,0 +1,2182 @@
+{
+  "nav": {
+    "group": {
+      "monitor": "监控",
+      "pool": "资源池",
+      "tools": "工具",
+      "access": "访问控制",
+      "operations": "运维"
+    },
+    "overview": "总览",
+    "identities": "身份池",
+    "proxies": "代理",
+    "apiKeys": "API Key",
+    "playground": "调试台",
+    "apiDocs": "接口文档",
+    "logs": "日志",
+    "settings": "设置",
+    "notifications": "通知",
+    "system": "系统信息",
+    "diagnose": "诊断",
+    "backup": "备份",
+    "users": "用户",
+    "endpointAccess": "接口访问控制",
+    "tools": "基础工具",
+    "downloads": "下载",
+    "library": "资料库",
+    "watchlist": "关注列表",
+    "scheduler": "调度器",
+    "mcp": "MCP"
+  },
+  "page": {
+    "overview": {
+      "title": "总览",
+      "description": "身份池健康度、各接口成功率与风控率、近期请求量。"
+    },
+    "identities": {
+      "title": "身份池",
+      "description": "铸造、导入、测试与退休用于发起请求的身份。"
+    },
+    "proxies": {
+      "title": "代理",
+      "description": "出口地址、连通性与 GeoIP 探测结果。"
+    },
+    "apiKeys": {
+      "title": "API Key",
+      "description": "Key、scope 与配额。密钥仅在创建时显示一次。"
+    },
+    "playground": {
+      "title": "调试台",
+      "description": "调用接口并同时查看归一化结果与原始响应。"
+    },
+    "logs": {
+      "title": "日志",
+      "description": "请求日志与审计日志，可按 request_id、接口与结果检索。"
+    },
+    "apiDocs": {
+      "title": "接口文档",
+      "description": "按当前界面语言渲染的 Swagger UI。"
+    },
+    "settings": {
+      "title": "设置",
+      "description": "分组展示配置项，并标注每一项的来源。"
+    },
+    "notifications": {
+      "title": "通知",
+      "description": "告警通道、触发条件与测试推送。"
+    },
+    "system": {
+      "title": "系统信息",
+      "description": "版本、组件连通性、版本漂移与磁盘占用。"
+    },
+    "diagnose": {
+      "title": "诊断",
+      "description": "一键六步自检，输出可导出的脱敏报告。"
+    },
+    "backup": {
+      "title": "备份",
+      "description": "创建与恢复备份。身份默认不导出。"
+    },
+    "users": {
+      "title": "用户",
+      "description": "账号与角色、修改自己的密码、会话管理。"
+    },
+    "setup": {
+      "title": "初始化",
+      "description": "创建首个管理员并验证部署是否可用。"
+    },
+    "login": {
+      "title": "登录",
+      "description": "登录控制台。"
+    },
+    "notFound": {
+      "title": "页面不存在",
+      "description": "控制台中没有这个路由。",
+      "action": "返回总览"
+    },
+    "scheduler": {
+      "title": "调度器",
+      "description": "下一个请求由哪个身份来发、什么机制阻止某一个身份承担全部请求，以及身份池什么时候自动补充。"
+    },
+    "about": {
+      "title": "关于",
+      "description": "许可协议、版权与赞助商。"
+    }
+  },
+  "shell": {
+    "environment": "环境",
+    "account": "账号",
+    "accountMenu": "账号菜单",
+    "signedInAs": "已登录：{username}",
+    "notSignedIn": "未登录",
+    "rateLimit": "限额：剩余 {remaining} / {limit}",
+    "breadcrumb": "面包屑导航"
+  },
+  "pool": {
+    "summary": "{count} 个身份可用",
+    "active": "可用",
+    "cooling": "冷却中",
+    "degraded": "降级",
+    "retired": "已退休",
+    "minting": "铸造中"
+  },
+  "field": {
+    "identity": "身份",
+    "identityId": "身份 ID",
+    "platform": "平台",
+    "endpoint": "接口",
+    "proxy": "代理",
+    "state": "状态",
+    "outcome": "结果",
+    "requestId": "请求 ID",
+    "taskId": "任务 ID",
+    "errorCode": "错误码",
+    "duration": "耗时",
+    "httpStatus": "HTTP 状态",
+    "createdAt": "创建时间",
+    "lastUsedAt": "最近使用",
+    "lastCheckAt": "最近探测",
+    "cooldownUntil": "冷却结束",
+    "consecutiveFails": "连续失败",
+    "source": "来源",
+    "authenticated": "登录态",
+    "scopes": "权限范围",
+    "rateLimit": "限额",
+    "expiresAt": "过期时间",
+    "role": "角色",
+    "username": "用户名",
+    "country": "国家/地区",
+    "latency": "延迟",
+    "cacheHit": "命中缓存",
+    "signer": "签名方式"
+  },
+  "metric": {
+    "successRate": "成功率",
+    "riskRate": "风控率",
+    "requests": "请求量",
+    "activeIdentities": "可用身份",
+    "openCircuits": "熔断接口",
+    "avgDuration": "平均耗时",
+    "archived": "已归档作品",
+    "archivedHint": "来自 {count} 位作者",
+    "downloaded": "已下载媒体",
+    "downloadedHint": "共归档 {total} 个",
+    "diskUsed": "已占用磁盘",
+    "diskUsedHint": "上限 {ceiling}",
+    "inFlight": "正在下载",
+    "inFlightHint": "{failed, plural, =0 {无失败或部分完成} other {# 个失败或部分完成}}",
+    "watching": "关注中",
+    "watchingHint": "按计划定期重新收集",
+    "watchingFailing": "{count} 个正在失败"
+  },
+  "login": {
+    "subtitle": "使用初始化时创建的管理员账号登录。",
+    "password": "密码",
+    "recoveryHint": "本项目不支持邮件找回密码，只能在运行 api 容器的宿主机上用 CLI 重置。",
+    "error": {
+      "invalid": "用户名或密码不正确。",
+      "rateLimited": "尝试次数过多，请在 {seconds} 秒后重试。",
+      "network": "无法连接 API，请确认 api 容器正在运行。",
+      "timeout": "API 未在超时前响应，请重试。",
+      "generic": "登录失败，请重试。"
+    },
+    "source": "GitHub 源码",
+    "demo": {
+      "title": "本站运行在演示模式下。",
+      "body": "下面的用户名和密码已经替你填好，直接点登录即可。演示账号是所有人共用的只读账号，仅供体验；需要完整功能请自行部署。",
+      "deploy": "自行部署"
+    }
+  },
+  "setupWizard": {
+    "stepsLabel": "初始化步骤",
+    "tokenFromUrl": "已从打开的链接中读取令牌。",
+    "admin": {
+      "usernameRule": "3 到 64 个字符：字母、数字、点、短横或下划线，且以字母或数字开头。",
+      "passwordRule": "至少 {length} 个字符。",
+      "tokenRule": "请粘贴容器日志中打印的初始化令牌。",
+      "failed": "创建管理员失败",
+      "attemptsLeft": "该令牌作废前还剩 {count} 次尝试机会"
+    },
+    "smoke": {
+      "contentId": "作品 ID",
+      "skip": "跳过测试并完成",
+      "diagnoseHint": "诊断页会逐步跑同样的检查，并指出是哪一步出的问题。"
+    }
+  },
+  "overview": {
+    "circuit": "熔断",
+    "samples": "样本数",
+    "riskIdentities": "命中身份数",
+    "reopen": "恢复剩余",
+    "allEndpoints": "全部接口",
+    "range": {
+      "label": "时间范围",
+      "1h": "最近 1 小时",
+      "6h": "最近 6 小时",
+      "24h": "最近 24 小时",
+      "7d": "最近 7 天"
+    },
+    "fresh": {
+      "title": "还没有请求",
+      "description": "这个部署还没有服务过任何请求。先铸造一个身份，再用真实链接试一次。",
+      "action": "去身份池"
+    },
+    "endpointCount": "共 {count} 个接口",
+    "poolDistribution": "身份池状态分布",
+    "poolHint": "各平台全部身份，按状态统计。",
+    "rates": "成功率与风控率",
+    "ratesHint": "每个时间桶内的请求占比。图表按本地时区显示，服务端存的是 UTC。",
+    "volume": "请求量",
+    "volumeHint": "每个时间桶的请求数，来自请求日志。",
+    "endpoints": "接口健康度",
+    "noEndpoints": "没有已声明的接口",
+    "noEndpointsHint": "平台适配器没有报告任何接口，这是部署问题，不是数据为空。",
+    "noIdentities": "身份池为空",
+    "noIdentitiesHint": "发起流量前先铸造或导入一个身份。",
+    "alert": {
+      "poolEmpty": "没有可用身份",
+      "poolEmptyHint": "身份池恢复前，请求会以 IDENTITY_POOL_EXHAUSTED 被拒绝。",
+      "degraded": "{count} 个身份处于降级状态",
+      "degradedHint": "降级身份仍会承接流量，但失败率高于其它身份。"
+    },
+    "byEndpoint": "各接口成功率",
+    "byEndpointHint": "本时间范围内请求量最高的接口，最多六条。在上方选择单个接口可单独查看。"
+  },
+  "identity": {
+    "column": {
+      "health": "健康度",
+      "cooldown": "冷却剩余",
+      "minted": "铸造时间",
+      "session": "会话凭据"
+    },
+    "noProxy": "服务器出口",
+    "source": {
+      "minted": "铸造",
+      "imported": "导入"
+    },
+    "failCount": "{count} 次失败",
+    "retire": "退休",
+    "retired": "已退休 {count} 个身份",
+    "bulkRetire": "批量退休",
+    "retireDialog": {
+      "title": "确认退休 {count} 个身份？",
+      "description": "退休会清除已存储的 cookie。统计数据保留，凭证不再保留，且无法恢复。"
+    },
+    "empty": {
+      "title": "还没有身份",
+      "description": "可以铸造游客身份，也可以导入登录态 cookie。",
+      "filteredTitle": "当前视图没有匹配的身份",
+      "filteredDescription": "身份池并不是空的，只是当前视图为空。可以放宽筛选、清空搜索，或显示无法承接请求的身份。"
+    },
+    "filter": {
+      "allPlatforms": "全部平台",
+      "allStates": "全部状态",
+      "allSources": "全部来源",
+      "anyLogin": "登录态不限",
+      "loggedInOnly": "仅登录态",
+      "guestOnly": "仅游客"
+    },
+    "mint": {
+      "action": "铸造",
+      "title": "铸造身份",
+      "description": "铸造会通过代理驱动真实浏览器，每个需要几秒钟。",
+      "count": "数量",
+      "proxyHint": "身份会绑定在铸造时使用的代理上，之后不再更换。",
+      "anyProxy": "由调度器选择",
+      "done": "已铸造 {count} 个身份",
+      "failed": "铸造失败"
+    },
+    "import": {
+      "action": "导入 cookie",
+      "title": "导入登录态 cookie",
+      "description": "四种格式都可以直接粘贴。保存前会先展示解析结果。",
+      "cookies": "Cookie",
+      "formats": "支持：请求头、扩展导出的 JSON、Netscape cookies.txt，或每行一个 key=value。",
+      "userAgent": "User agent",
+      "userAgentHint": "填写同一个浏览器会话的 UA，指纹才能与 cookie 匹配。",
+      "proxyHint": "选择该账号平时登录所用的出口。",
+      "submit": "保存身份",
+      "stored": "身份已导入。",
+      "failed": "导入失败",
+      "acknowledge": "我已知晓这串 cookie 等价于账号密码。",
+      "expiryNotice": "预计在 {date} 过期，到期前会发送通知提醒续期。",
+      "risk": {
+        "title": "这是一份凭证",
+        "equivalence": "登录态 cookie 等价于账号密码：拿到它的人就能以该账号的身份操作。",
+        "storage": "它会加密存储，任何接口都不会返回明文，但本实例的管理员可以使用它。",
+        "dedicated": "请使用专门准备的账号，不要用主账号。"
+      },
+      "format": "格式",
+      "browser": "浏览器",
+      "loggedIn": "登录态",
+      "count": "Cookie 数",
+      "missing": "缺少必需的 cookie：",
+      "maskNote": "取值由服务端掩码处理，控制台从不接收明文。",
+      "usableHint": "这组 cookie 是否可以作为身份使用。",
+      "role": {
+        "required": "必需",
+        "session": "登录态",
+        "useful": "有帮助",
+        "other": "其它"
+      }
+    },
+    "test": {
+      "title": "身份测试",
+      "rule": "规则",
+      "idle": "还没有结果。",
+      "note": {
+        "ok": "平台正常响应了这个身份，Cookie 被接受，签名也被读取了。",
+        "business_error": "算通过。平台正常响应了，只是说这条作品本身不可用——这是关于内容的事实，与这个身份无关。",
+        "risk_control": "平台拒绝的是这个身份，不是这次请求。它的 Cookie 已经废了或者被标记了，现在已进入冷却，冷却结束前不会被调度。",
+        "network_error": "根本没有拿到响应。问题出在本机与平台之间的代理、DNS 或 TLS，不在身份本身——换一个出口再测一次是值得的。",
+        "unknown": "没有拿到判定结果。"
+      }
+    },
+    "session": {
+      "ok": "有效",
+      "missing": "缺失",
+      "too_short": "仅引导值",
+      "unknown": "未知",
+      "checked": "检查了 {cookie}：{verdict}",
+      "check": "检查登录态",
+      "checkFailed": "登录态检查没能完成",
+      "reason": {
+        "live": "平台确认登录态有效。",
+        "signed_out": "没有有效登录态。平台对「从来没登录过」和「登录已失效」的回答是一样的，所以分不出是哪一种。",
+        "indeterminate": "抖音没有能区分访客和登录态的接口——两种情况的回答完全相同，都会给出一个 uid。这次能确认的是：这份 Cookie 到达了平台并被认了下来。",
+        "refused": "平台拒绝了这次检查而不是回答它，所以这一次说明不了会话的状态。",
+        "unreachable": "检查没拿到任何回应。是网络或代理的问题，不是会话的问题。"
+      }
+    },
+    "hidden": {
+      "title": "已隐藏 {count} 个身份",
+      "showingAll": "正在显示全部身份，包括无法承接请求的那些。",
+      "retired": "{count} 个已退休",
+      "deadSession": "{count} 个会话已失效",
+      "why": "这两类都无法承接请求：已退休身份的 cookie 已被清除；平台不再接受的会话即使签名正确也会被拒绝。冷却中和已降级的身份仍然显示。",
+      "showAll": "显示全部",
+      "hideUnusable": "隐藏不可用"
+    },
+    "health": {
+      "noTraffic": "无流量",
+      "noTrafficHint": "健康度窗口内没有请求，因此无法评分。这不等于测得的良好。"
+    },
+    "columnHint": {
+      "session": "对存下来的 Cookie 做的静态检查：会话 cookie 在不在，长度够不够——是真实会话还是首次访问拿到的引导值。不发请求、不看历史。",
+      "health": "这个身份最近的请求实际跑得怎么样：15 分钟内的成功率、60 分钟内的风控率，以及当前的连续失败次数。没有流量时为空。"
+    },
+    "columnsDiffer": "「会话凭据」和「健康度」量的不是同一件事。凭据完整但请求一直失败，说明 Cookie 没问题、是签名或出口有问题——这是本页最快的判断依据。",
+    "refill": {
+      "title": "自动补充",
+      "description": "worker 每分钟检查一次各平台，可用身份低于该平台的下限时每次锻造一个，直到补满。没有单独设置的平台沿用调度页上的全局值 {minimum} / {target}；把数字改回全局值，它就重新跟随全局。",
+      "noBrowser": "没有配置浏览器容器，无法锻造。池子里只有手动导入的身份，两个阈值不起作用。",
+      "below": "低于 {minimum}，正在补充。",
+      "satisfied": "已达到 {minimum}。",
+      "minting": "正在锻造 {count} 个",
+      "manualOnly": "仅手动导入",
+      "usableHint": "可用指的是存活且连续失败次数少于 {streak} 次，不是行数——一个每次请求都失败的身份依然算存活。",
+      "minimum": "低于",
+      "target": "补到",
+      "saved": "补充阈值已更新",
+      "saveFailed": "补充阈值更新失败",
+      "auto": "自动",
+      "autoFor": "自动锻造 {platform} 身份",
+      "offHint": "已关闭：不自动锻造，也不发身份池告警。导入的身份照常可用。",
+      "inherited": "默认",
+      "inheritedHint": "沿用调度页上的全局值",
+      "invalid": "下限至少为 1，补到的数量不能低于下限",
+      "reset": "恢复默认",
+      "resetHint": "去掉这个平台单独设置的数字，重新沿用调度页上的全局值",
+      "resetDone": "已恢复为全局阈值"
+    },
+    "mintLog": {
+      "inFlight": "正在锻造 {platform} 身份",
+      "idle": "空闲",
+      "backoff": "连续失败 {failures} 次，{when} 之前不再重试",
+      "ok": "锻造成功",
+      "allOk": "最近 {count} 次全部成功",
+      "someFailed": "最近 {count} 次中有 {failures} 次失败",
+      "reason": {
+        "minted": "锻造成功",
+        "no_free_proxy": "每个代理后面都已经有一个该平台的存活身份了；同一出口后面放两个正是身份池要避免的重组",
+        "proxy_not_found": "本次锻造指定的代理已经不存在了",
+        "proxy_undecryptable": "选中代理的 URL 解密失败；改用直连锻造会把这个身份绑死在一个它永远不会再用的出口上",
+        "rpc_unavailable": "浏览器容器没有响应",
+        "unusable_fingerprint": "浏览器返回的指纹里没有可用的版本号，与其配一个猜出来的 TLS 档案，不如直接拒绝这个身份"
+      }
+    },
+    "reset": {
+      "action": "重置",
+      "bulk": "重置 {count} 个身份",
+      "done": "{count} 个身份已重新参与轮换",
+      "dialogBody": "将清除冷却时间和连续失败计数，并把身份标记为可用。适用于失败并非它自己造成的情况——比如连续查了一批错误的 ID，或者代理已经修好了。如果会话本身已经废了，平台会在几次请求内再次拒绝它，它会重新进入冷却。",
+      "dialogTitle": "确定让 {count} 个身份重新参与轮换？"
+    },
+    "history": {
+      "title": "身份历史",
+      "byEndpoint": "按接口统计",
+      "recent": "最近的请求",
+      "calls": "{count} 次调用",
+      "refused": "{count} 次被拒",
+      "clean": "无拒绝",
+      "empty": "最近一周没有请求记录。",
+      "oneRefused": "拒绝这个身份的是 {endpoint}。",
+      "oneRefusedHint": "其他接口仍然正常响应它，说明会话还活着。只有单个接口拒绝，通常是本程序在那条路径上的签名有问题，或者那是个需要 visitor id 的签名保护接口——不是 Cookie 废了。",
+      "everythingRefused": "这个身份碰过的每个接口都拒绝了它。",
+      "everythingRefusedHint": "问题在身份本身而不在某条路径：会话已经用尽，或者被平台标记了。通常的做法是退休它，让身份池锻造一个新的。"
+    },
+    "contents": {
+      "title": "这个身份由什么组成",
+      "hint": "该身份签名和发请求时携带的 Cookie，在不泄露内容的前提下尽可能展示。",
+      "browser": "浏览器",
+      "timezone": "时区",
+      "chars": "{count} 字符",
+      "unavailable": "读取不到这个身份的 Cookie。上面的信息仍然有效。",
+      "unreadable": "这份 Cookie 用的密钥本实例已经没有了——密钥轮换时没有重新加密。这个身份同样无法再签名，退休它并铸造一个新的。",
+      "empty": "这个身份一条 Cookie 都没有，发出去只会被拒。",
+      "wiped": "已退休的身份会清空 Cookie，所以这里没有内容可看。",
+      "missing": "缺少本程序视为必需的 Cookie：{names}。不管其余部分如何，用这个身份的请求都会被拒。",
+      "maskNote": "只显示每个值的首尾各四位。完整值从不会发到这个页面——Cookie 本身就是凭证，带登录态的那份等于别人的账号。",
+      "reveal": "显示真实内容",
+      "revealFailed": "读不出这份 Cookie",
+      "revealed": "这些是可用的凭证。看到这个屏幕的人都能以这个身份发请求。本次读取已写入审计日志。",
+      "copyHeader": "复制为 Cookie 请求头",
+      "copyJson": "复制为 JSON",
+      "copiedHeader": "已复制 Cookie 请求头",
+      "copiedJson": "已按 JSON 复制 Cookie",
+      "hide": "重新隐藏"
+    },
+    "cookieRole": {
+      "required": "必需",
+      "session": "登录态",
+      "useful": "有用",
+      "other": "其他"
+    },
+    "cookieRoleAbout": {
+      "required": "本程序拒绝使用缺少它的身份。",
+      "session": "带有登录态。比访客 Cookie 值钱得多，泄露的代价也大得多。",
+      "useful": "不是必需的，但带上它的身份被拒的次数会少一些。",
+      "other": "平台下发的，原样保留。本程序不读它。"
+    },
+    "cookieAbout": {
+      "__ac_nonce": "反爬层下发的一次性质询，与 __ac_signature 配对使用。",
+      "__ac_signature": "对 __ac_nonce 质询的应答，由页面内计算得出。",
+      "ak_bmsc": "Akamai Bot Manager 的会话 Cookie，由 CDN 下发而非 TikTok 本身。",
+      "architecture": "页面记录下来的运行环境硬件信息。本程序发的是自己那套指纹值，不会读回这些。",
+      "bd_ticket_guard_client_data": "字节 ticket guard 的客户端证明数据。",
+      "biz_trace_id": "Web 端给自己的调用附带的链路 id。",
+      "bm_sv": "Akamai Bot Manager 的短期校验 Cookie。",
+      "csrf_session_id": "把 CSRF 令牌绑定到某一个会话。",
+      "delay_guest_mode_vid": "Web 端访客模式的记账信息。",
+      "device_web_cpu_core": "页面看到的 CPU 核心数。属于指纹信息，本程序不读回。",
+      "device_web_memory_size": "页面看到的内存大小。属于指纹信息，本程序不读回。",
+      "g_state": "Google 登录组件的状态，和平台接口无关。",
+      "IsDouyinActive": "页面判断标签页是否处于前台。",
+      "msToken": "页面自己的 JS 定期刷新的短期令牌，参与请求签名。本程序的 TikTok 签名需要它，一旦过期接口就开始返回空数据。",
+      "odin_tt": "长期设备标识。风控用它把不同的请求归到同一台设备。",
+      "passport_csrf_token": "账号服务的 CSRF 令牌，写操作时带回；对读接口无影响。",
+      "s_v_web_id": "抖音的访客校验 id。本程序把它原样作为 `verifyFp` 和 `fp` 发出去。",
+      "sessionid": "登录态。拿到它的人就是以那个账号的身份登录。",
+      "sessionid_ss": "登录态的 secure-only 那一半。",
+      "sid_guard": "带签发时间和有效期的会话 id，本程序从中读取过期时间。",
+      "sid_tt": "登录态会话 id 的另一种形式。",
+      "sid_ucp_v1": "较新的登录态封装形式。",
+      "store-country-code": "TikTok 判定这个客户端所在的区域。",
+      "store-idc": "这个账号的数据落在哪个机房。改错了请求就会被发到错误的区域。",
+      "tiktok_webapp_theme": "站点的明暗主题偏好，和请求无关。",
+      "tiktok_webapp_theme_source": "该主题是手动选的还是跟随系统。",
+      "tt-target-idc": "Web 端希望由哪个机房来服务。",
+      "tt_chain_token": "让请求继续走上一次的同一条边缘链路。",
+      "tt_csrf_token": "Web 端自己调用时带回的 CSRF 令牌。",
+      "ttwid": "字节跳动的设备级访客标识，由 CDN 边缘节点下发。没有它，请求看起来就是平台从没见过的客户端。",
+      "uid_tt": "账号的用户 id，随登录态一起下发。",
+      "UIFID": "设备与用户的融合标识。TikTok 签名会和 msToken 一起带上它。",
+      "uifid": "设备与用户的融合标识。TikTok 签名会和 msToken 一起带上它。",
+      "UIFID_TEMP": "抖音铸造出来的访客 id，也是网页签名 SDK 用来签名的那个值。本程序会按六种拼写去找它，找不到任何一种就无法给抖音请求签名。",
+      "uifid_temp": "抖音铸造出来的访客 id，网页签名 SDK 用它签名。",
+      "UIFIDTEMP": "抖音铸造出来的访客 id，SDK 接受的另一种拼写。",
+      "uifidtemp": "抖音铸造出来的访客 id，SDK 接受的另一种拼写。"
+    },
+    "drawerTitle": "身份详情",
+    "export": {
+      "action": "导出 {count} 个",
+      "done": "已导出 {count} 个身份",
+      "failed": "导出失败"
+    },
+    "restore": {
+      "label": "从文件恢复",
+      "hint": "「导出」写出的文件。Cookie 和指纹会一起还原，重新粘贴做不到这一点。",
+      "loaded": "{file} · {count} 个身份。载入文件后，下面的粘贴表单会关闭。",
+      "submit": "恢复 {count} 个身份",
+      "done": "{count, plural, =0 {没有恢复任何身份} other {已恢复 # 个身份}}",
+      "skipped": "{count} 个被跳过——它们的 Cookie 已过期或为空。",
+      "failed": "无法从这个文件恢复",
+      "unreadable": "这不是「导出」写出的文件。"
+    }
+  },
+  "proxy": {
+    "column": {
+      "label": "备注",
+      "address": "地址",
+      "geo": "出口地区",
+      "identities": "身份数",
+      "id": "代理 ID",
+      "timezone": "时区"
+    },
+    "undecryptable": "无法解密",
+    "geoHint": "两位国家/地区代码，探测后会自动填写。",
+    "exitIp": "出口地址",
+    "created": "代理已添加。",
+    "updated": "代理已更新。",
+    "deleted": "已删除 {count} 个代理",
+    "empty": {
+      "title": "还没有代理",
+      "description": "不配置代理时，所有身份共用服务器自身的出口地址。"
+    },
+    "add": {
+      "action": "添加代理",
+      "title": "添加代理",
+      "description": "凭证在写入时即加密，不会再返回给控制台。"
+    },
+    "edit": {
+      "title": "编辑代理",
+      "urlOptional": "地址留空表示保留原有地址。"
+    },
+    "delete": {
+      "title": "确认删除 {count} 个代理？",
+      "description": "绑定在被删代理上的身份会被退休：身份不能改用其它出口发出请求。"
+    },
+    "bulk": {
+      "enable": "标记为可用",
+      "disable": "标记为不可用",
+      "delete": "删除所选",
+      "enabled": "已将 {count} 个代理标记为可用",
+      "disabled": "已将 {count} 个代理标记为不可用"
+    },
+    "import": {
+      "action": "批量导入",
+      "title": "导入代理",
+      "description": "粘贴列表即可，逐行识别格式，导入成功的会立刻探测。",
+      "labelField": "本批备注",
+      "labelHint": "会应用到本次导入的每一个代理。",
+      "pasteHint": "每行粘贴一个代理，可以先看解析结果。",
+      "parsed": "已解析 {count} 行",
+      "unparsed": "{count} 行无法识别",
+      "duplicates": "{count} 行重复",
+      "withCredentials": "含账号密码",
+      "done": "已导入 {count} 个代理",
+      "result": "成功 {created} 个，拒绝 {rejected} 个。",
+      "reason": {
+        "unparsable": "无法识别的代理格式",
+        "empty": "空行",
+        "scheme_not_supported": "不支持的协议",
+        "malformed_authority": "主机与端口无法解析",
+        "missing_host": "缺少主机",
+        "missing_port": "缺少端口",
+        "port_not_a_number": "端口不是数字",
+        "port_out_of_range": "端口必须在 1 到 65535 之间"
+      }
+    },
+    "line": {
+      "unparsable": "无法识别的代理格式",
+      "scheme": "不支持的协议",
+      "port": "端口缺失或不合法",
+      "host": "缺少主机"
+    },
+    "test": {
+      "title": "代理探测",
+      "failed": "探测失败"
+    }
+  },
+  "settings": {
+    "version": "settings v{version}",
+    "precedence": "优先级：数据库覆盖 > .env 种子值 > 代码默认值。一个键一旦落库，改 .env 就不再生效，除非把这一行重置。",
+    "precedenceCount": "当前有 {count} 个键覆盖了 .env 中的同名值",
+    "readOnly": "当前角色只能查看配置，不能修改。",
+    "source": {
+      "database": "数据库覆盖",
+      "databaseHint": "存在 settings 表中。以此值为准，重置之前 .env 中的同名值不生效。",
+      "environment": ".env 种子值",
+      "environmentHint": "启动时从环境变量读取。因为没有数据库覆盖，所以它生效。",
+      "default": "代码默认值",
+      "defaultHint": "内置默认值。数据库与环境变量都没有设置这个键。"
+    },
+    "sensitive": {
+      "tag": "敏感项",
+      "adminOnly": "敏感项仅管理员可以修改。"
+    },
+    "invalid": {
+      "integer": "请输入整数。",
+      "number": "请输入数字。",
+      "json": "不是合法的 JSON。"
+    },
+    "hint": {
+      "onePerLine": "每行一条。",
+      "json": "JSON 值。"
+    },
+    "row": {
+      "default": "默认值：{value}",
+      "updated": "修改于 {when}",
+      "reset": "重置为继承值",
+      "alreadyInherited": "当前已是继承值，没有可移除的覆盖。"
+    },
+    "toast": {
+      "saved": "已保存 {key}",
+      "saveFailed": "保存 {key} 失败",
+      "reset": "{key} 已重置为继承值",
+      "resetFailed": "重置 {key} 失败"
+    },
+    "confirm": {
+      "saveTitle": "修改敏感配置",
+      "resetTitle": "重置敏感配置",
+      "description": "输入键名 {key} 以确认。",
+      "warning": "这一项会扩大攻击面。域名白名单是本服务唯一的 SSRF 防线，CORS 来源决定哪些站点可以持有你的 API Key，下载代理会让这台服务器变成中转。",
+      "audit": "本次修改会连同你的账号与修改前的值一起写入审计日志。"
+    },
+    "empty": {
+      "title": "没有可显示的配置",
+      "description": "服务端返回的配置表为空。"
+    },
+    "group": {
+      "sched": "调度",
+      "pool": "身份池",
+      "signing": "签名",
+      "cache": "缓存",
+      "snapshot": "快照",
+      "retention": "保留期",
+      "api": "接口",
+      "security": "安全",
+      "notify": "通知",
+      "system": "系统",
+      "other": "其它",
+      "archive": "内容归档",
+      "capacity": "容量",
+      "media": "媒体",
+      "watchlist": "关注列表",
+      "demo": "演示"
+    },
+    "groupHint": {
+      "sched": "等待、排队、冷却，以及接口熔断的阈值。",
+      "pool": "水位线与单身份的保守请求速率。",
+      "signing": "由谁生成请求签名。内置纯算法已经与两个平台当前实际发送的签名对不上，所以默认走浏览器。",
+      "cache": "解析结果可复用的时长。",
+      "snapshot": "写入内容历史时的去重窗口。",
+      "retention": "日志、事件与任务的保留时长。内容快照永不自动删除。",
+      "api": "防滥用限额、长轮询上限与默认响应语言。",
+      "security": "这一组全部是敏感项：白名单、CORS 与下载代理。",
+      "notify": "总开关、通道与默认告警语言。",
+      "system": "实例级行为，包含默认关闭的更新检查。",
+      "other": "没有独立分组的配置项。",
+      "archive": "任务结果过期后本实例会保留什么。归档保存作品的当前状态，旁边的指标历史保存它如何变化。",
+      "capacity": "磁盘接近写满时本实例的行为：先告警，再暂停后台写入——但绝不删除数据。",
+      "media": "下载的视频与图片存放在哪里、最多可以占用多少磁盘、达到上限后会发生什么。这里只会删除已保存的文件，且永远不会删除置顶的那些。",
+      "watchlist": "本实例按定时重复采集哪些目标，以及这件事最多能占用多少队列。定时任务和其他请求走同一个队列和身份池，因此永远给正在等待的调用方让路。",
+      "demo": "演示部署对外公开的公共账号，以及它的任务保留多久。"
+    },
+    "choice": {
+      "signing.mode": {
+        "rpc": "浏览器（推荐）— 直接运行平台自己的脚本",
+        "native": "内置纯算法 — 无需浏览器",
+        "auto": "先用内置算法，签名开始被拒时自动切到浏览器"
+      },
+      "security.request_proxy": {
+        "deny": "拒绝（推荐）—— 调用方不能指定出口",
+        "public": "允许，但仅限公网地址 —— 回环与内网地址会被拒绝",
+        "any": "全部允许 —— 持有 API Key 的人可访问本服务器所在的内网"
+      }
+    },
+    "demo": {
+      "title": "演示模式",
+      "body": "对外公开一个只读账号和 API Key，任何人都能拿它试用这台实例。",
+      "turnOn": "开启演示模式",
+      "turnOff": "关闭演示模式",
+      "rotate": "重新签发凭据",
+      "username": "用户名",
+      "keyPrefix": "API Key 前缀",
+      "scopes": "Key 作用域",
+      "shownOnce": "现在就复制走——只显示这一次，系统不保存。",
+      "password": "密码",
+      "apiKey": "API Key",
+      "enabledButMissing": "演示模式已开启，但账号并不存在。点「重新签发凭据」生成一个。",
+      "note": "演示账号是只读的：能调用平台接口、能看不含凭据的页面，不能下载、不能改设置、看不到身份池。它的请求不写入请求日志和归档库，任务也会在几分钟内被清理。关闭演示模式会立即结束所有演示会话并让 Key 失效，但不会删除任何东西。",
+      "toast": {
+        "on": "演示模式已开启",
+        "off": "演示模式已关闭",
+        "rotated": "已签发新的演示凭据"
+      }
+    }
+  },
+  "notifications": {
+    "dedupExplainer": "每个触发条件都带一个去重窗口：同一条告警在窗口内只发一次，窗口关闭前一律抑制。没有它，一次熔断会按请求条数刷屏，用户第一件事就是关掉通知。告警可信是因为它足够少。",
+    "severity": {
+      "error": "错误",
+      "warning": "警告"
+    },
+    "action": {
+      "testAll": "发送测试告警",
+      "add": "新增通道"
+    },
+    "delivery": {
+      "title": "投递",
+      "description": "总开关，以及通道未单独指定时使用的语言。",
+      "enabled": "发送告警",
+      "enabledHint": "关闭时触发条件仍会命中并记录，但不投递。",
+      "language": "默认告警语言",
+      "languageHint": "告警按接收者的语言渲染，不是按控制台操作者的语言。"
+    },
+    "channels": {
+      "title": "通道",
+      "description": "告警的投递目标。Webhook 目标必须是 https，且不能解析到私有地址。"
+    },
+    "triggers": {
+      "title": "触发条件与去重窗口",
+      "description": "事件集合是固定的。不做限定时，通道会收到全部事件。"
+    },
+    "column": {
+      "name": "名称",
+      "type": "类型",
+      "target": "目标",
+      "language": "语言",
+      "events": "事件",
+      "status": "状态",
+      "event": "事件",
+      "severity": "级别",
+      "dedup": "去重窗口",
+      "scope": "去重维度",
+      "subscribers": "订阅通道",
+      "description": "含义"
+    },
+    "empty": {
+      "title": "还没有通道",
+      "description": "没有通道时，告警只停留在控制台。加一个通道，故障才能在没人看这个页面时找到你。"
+    },
+    "editor": {
+      "title": "通道",
+      "description": "凭证存放在服务端，之后不会再完整显示。"
+    },
+    "field": {
+      "type": "类型",
+      "typeHint": "决定 payload 模板。该值是稳定标识，不做翻译。",
+      "name": "名称",
+      "nameHint": "用于在测试与审计记录中标识这个通道。",
+      "url": "URL",
+      "urlHint": "仅支持 https。回环、私有与链路本地地址会被拒绝。",
+      "group": "Bark 分组",
+      "groupHint": "在设备上把这些通知归为一组。",
+      "secret": "签名密钥",
+      "secretHint": "可选。机器人使用加签而非关键词校验时填写。",
+      "token": "Bot token",
+      "chatId": "Chat id",
+      "host": "SMTP 主机",
+      "port": "端口",
+      "sender": "发件人",
+      "recipients": "收件人",
+      "recipientsHint": "多个地址用逗号分隔。",
+      "username": "SMTP 用户名",
+      "password": "SMTP 密码",
+      "ssl": "隐式 TLS",
+      "starttls": "STARTTLS",
+      "language": "语言",
+      "languageHint": "该通道按这个语言渲染告警。",
+      "languageInherit": "使用默认语言",
+      "events": "事件",
+      "eventsHint": "取消勾选此通道不需要接收的事件。每个事件的去重窗口是固定的，显示在旁边。",
+      "enabled": "启用",
+      "enabledHint": "禁用的通道会保留配置但跳过投递。",
+      "maskedHint": "此处以掩码显示。保持不变即保留已存储的值；输入新值即替换，清空则删除。"
+    },
+    "error": {
+      "nameTaken": "已有同名通道。",
+      "nameRequired": "请为通道取一个名称。",
+      "urlHttps": "URL 必须以 https:// 开头",
+      "required": "此项必填。",
+      "credentialMask": "请重新输入“{record}”的 {credential}：提交的是掩码，不是凭据。",
+      "credentialMoved": "“{record}”指向了新的目标，已存储的 {credential} 不会被保留，请重新输入。"
+    },
+    "event": {
+      "dedupHint": "每 {window} 一次，按 {scope} 区分",
+      "scopeGlobal": "全实例"
+    },
+    "eventText": {
+      "endpoint_circuit_open": "某个接口触发熔断，正在拒绝请求。",
+      "pool_empty": "某平台没有可用身份，请求进入排队或直接失败。",
+      "pool_below_min": "身份池低于水位线，正在铸造补充。",
+      "proxy_unhealthy": "某个代理探测失败，已被移出轮转。",
+      "signature_stale": "本地签名与浏览器结果不再一致，算法已经漂移。",
+      "cookie_expiring": "某个登录态 cookie 即将过期，需要续期。",
+      "backup_failed": "一次备份任务没有完成。"
+    },
+    "toast": {
+      "saved": "已保存",
+      "saveFailed": "保存通知配置失败",
+      "testSent": "测试告警已发送",
+      "testFailed": "测试告警发送失败",
+      "channelSaved": "通道 {name} 已保存",
+      "channelDeleted": "通道 {name} 已删除",
+      "testDisabled": "告警总开关处于关闭状态，未发送任何内容。打开 notify.enabled 后再测试投递。",
+      "testRefused": "{channels} 拒绝了测试告警：{reason}"
+    },
+    "confirm": {
+      "deleteTitle": "删除这个通道？",
+      "deleteDescription": "{name} 将立即停止接收告警。"
+    }
+  },
+  "system": {
+    "column": {
+      "component": "组件",
+      "health": "状态",
+      "latency": "延迟",
+      "detail": "详情",
+      "table": "表",
+      "rows": "行数",
+      "rowsCompact": "行数（简写）"
+    },
+    "warmContexts": "{count} 个预热上下文",
+    "metric": {
+      "version": "版本",
+      "settingsVersion": "settings v{version}",
+      "uptime": "运行时长",
+      "activeIdentities": "可用身份",
+      "dbSize": "数据库大小"
+    },
+    "components": {
+      "title": "组件",
+      "description": "连通性与往返耗时由服务端测得，不是由当前浏览器测得。",
+      "emptyTitle": "没有组件信息",
+      "emptyDescription": "状态接口没有返回组件数据。"
+    },
+    "drift": {
+      "title": "Chromium 与 wreq 指纹",
+      "description": "产出签名的浏览器与复现指纹的客户端，主版本必须一致。",
+      "chromium": "Chromium 主版本",
+      "wreq": "wreq 指纹主版本",
+      "warning": "版本漂移：Chromium 为 {chromium}，wreq 指纹对应 {wreq}。签名照样能产出，但指纹已经和产出它的浏览器对不上。请固定浏览器镜像或更新指纹。",
+      "unknownChromium": "没有拿到 Chromium 主版本。browser-rpc 未配置，或者还没有响应过健康检查。",
+      "unknownWreq": "当前安装的 wreq 没有任何 Chrome 模拟档案，无从与浏览器比对。签名仍然可用，但 TLS 指纹与产出它的浏览器对不上。",
+      "aligned": "两者同为主版本 {major}，无漂移。"
+    },
+    "storage": {
+      "title": "磁盘占用",
+      "description": "各表行数为估算值。数据库大小：{size}。",
+      "emptyTitle": "没有表级数据",
+      "emptyDescription": "服务端无法读取存储统计。"
+    },
+    "updates": {
+      "title": "检查更新",
+      "description": "默认关闭。不开启就不会有任何数据离开这台机器。",
+      "outbound": "这项检查会从你的浏览器向 github.com 发起一次外网请求。不允许外连的部署环境请保持关闭。",
+      "toggle": "允许检查更新",
+      "toggleHint": "作为运行配置存储，重启后依然有效。",
+      "check": "立即检查",
+      "latest": "最新版本：{tag}",
+      "upToDate": "已是最新版本 {tag}",
+      "openReleases": "打开发布页",
+      "httpError": "GitHub 返回 HTTP {status}。",
+      "networkError": "请求没有完成。当前部署可能没有外网访问权限。",
+      "saved": "已保存",
+      "saveFailed": "保存更新检查设置失败"
+    },
+    "notConfigured": "未配置"
+  },
+  "diagnose": {
+    "redacted": "报告在离开服务端之前已经脱敏：代理密码、cookie 与 API Key 一律掩码。可以直接粘贴到公开 issue 里。",
+    "suggestedAction": "建议动作：",
+    "stepRunning": "正在执行。",
+    "stepPending": "等待前面的步骤完成。",
+    "status": {
+      "pass": "通过",
+      "warn": "警告",
+      "fail": "失败",
+      "skip": "已跳过",
+      "running": "执行中",
+      "pending": "等待中",
+      "idle": "未执行"
+    },
+    "step": {
+      "components": "postgres、redis 与 browser-rpc 是否可达。",
+      "egress": "本机能否直连平台域名。",
+      "proxies": "逐个探测代理的连通性、出口 IP 与 GeoIP。",
+      "pool": "有多少可用身份，以及最老的身份多久没成功过。",
+      "signing": "本地纯算法与浏览器产出的签名是否一致。",
+      "smoke": "用一条固定的公开链接跑完整流程。"
+    },
+    "action": {
+      "run": "开始自检",
+      "rerun": "重新自检"
+    },
+    "options": {
+      "title": "执行范围",
+      "description": "六个步骤按顺序执行，每步都有独立超时，卡住的依赖不会拖住其余步骤。",
+      "smoke": "包含端到端冒烟测试",
+      "smokeHint": "第 6 步会用一条固定的公开链接走完整链路。关闭它可以让整个自检只在本地进行。"
+    },
+    "steps": {
+      "title": "步骤",
+      "finished": "完成于 {when}，结论 {verdict}",
+      "running": "执行中。每一步完成后立即回报。",
+      "idle": "本次会话还没有执行过自检。"
+    },
+    "verdict": {
+      "pass": "PASS",
+      "warn": "WARN",
+      "fail": "FAIL"
+    },
+    "report": {
+      "title": "报告",
+      "description": "纯文本，已脱敏，可直接粘贴到 issue。",
+      "copy": "复制报告",
+      "waiting": "自检完成后会显示报告。",
+      "empty": "执行一次自检以生成报告。"
+    },
+    "toast": {
+      "startFailed": "启动自检失败",
+      "copied": "报告已复制"
+    }
+  },
+  "backup": {
+    "keyExplainer": "凭证以密文导出，备份包不含主密钥。因此恢复时必须提供创建它的那把 DTK_SECRET_KEY；密钥不同则代理地址与 cookie 都无法解密。",
+    "adminOnly": "创建与恢复备份仅管理员可以操作。",
+    "restoreDone": "已恢复 {name}。请刷新控制台，让各页面读取新数据。",
+    "identities": {
+      "included": "含身份",
+      "excluded": "不含身份"
+    },
+    "column": {
+      "file": "备份包",
+      "created": "创建时间",
+      "version": "创建版本",
+      "identities": "身份",
+      "rows": "行数",
+      "size": "大小",
+      "keyCheck": "密钥校验"
+    },
+    "action": {
+      "create": "创建备份",
+      "restore": "恢复"
+    },
+    "create": {
+      "title": "创建备份",
+      "description": "settings、代理、内容快照、用户与 API Key 始终包含在内。请求日志与身份事件不包含：它们描述的是已经结束的运行过程。",
+      "includeIdentities": "包含身份",
+      "includeIdentitiesHint": "默认关闭。身份与某个代理、某个出口地址绑定，换机之后不应继续使用。",
+      "includeIdentitiesWarning": "备份包会以密文携带登录态 cookie。换一台机器出口 IP 就变了，从新出口使用这些身份正是最容易触发风控的做法。只在出口不变时恢复它们。",
+      "hint": "备份包写在服务端，与其它备份放在一起。"
+    },
+    "list": {
+      "title": "备份列表",
+      "description": "服务端可见的备份，按时间倒序。"
+    },
+    "empty": {
+      "title": "还没有备份",
+      "description": "内容快照是几个月积累出来的，平台删掉之后再也拿不回来。现在就创建第一个备份包。"
+    },
+    "confirm": {
+      "title": "恢复这个备份包？",
+      "description": "输入文件名以确认。",
+      "warning": "恢复会用备份包覆盖当前数据库，两边都存在的行会被备份中的版本替换。",
+      "keyReminder": "当前实例必须持有创建该备份包时的同一把 DTK_SECRET_KEY。"
+    },
+    "keyMismatch": {
+      "title": "主密钥不匹配",
+      "body": "这个备份包是用另一把 DTK_SECRET_KEY 创建的，本次没有恢复任何数据。继续恢复会让所有代理地址与 cookie 无法解密，因此服务端直接拒绝，而不是恢复到一半。",
+      "action": "请改用原来的密钥恢复，或者从一个全新实例开始，重新导入能够重建的数据。"
+    },
+    "toast": {
+      "created": "备份已创建",
+      "createFailed": "备份失败",
+      "restored": "已恢复 {name}",
+      "restoreFailed": "恢复失败"
+    },
+    "key": {
+      "matches": "当前密钥",
+      "differs": "其他密钥"
+    }
+  },
+  "users": {
+    "you": "当前账号",
+    "adminOnly": "账号管理仅管理员可用。修改自己的密码与查看会话在下方。",
+    "cannotDeleteSelf": "不能删除当前登录的账号。",
+    "action": {
+      "create": "新增用户",
+      "changeRole": "修改角色"
+    },
+    "column": {
+      "id": "用户 id",
+      "lastLogin": "最近登录",
+      "session": "会话",
+      "lastSeen": "最近活跃",
+      "ip": "地址",
+      "userAgent": "客户端"
+    },
+    "list": {
+      "title": "账号",
+      "description": "角色变更在下一次请求即生效，没有缓存需要等待。"
+    },
+    "empty": {
+      "title": "没有账号",
+      "description": "每个实例至少有一个管理员。"
+    },
+    "matrix": {
+      "title": "各角色的权限",
+      "description": "三个角色，不做用户组，也不做细粒度权限：自部署实例的用户数是个位数，一屏能看完的规则才会被真正遵守。",
+      "capability": "权限"
+    },
+    "capability": {
+      "backup": "创建与恢复备份",
+      "diagnose": "执行自检",
+      "fetch": "调用平台接口",
+      "keys": "创建与撤销 API Key",
+      "pool": "管理身份池与代理",
+      "read": "查看身份池、代理、Key 与设置",
+      "readPublic": "查看总览、资料库、下载、日志与系统信息",
+      "sensitive": "修改敏感配置：白名单、CORS、下载代理",
+      "settings": "修改运行配置",
+      "users": "管理账号与角色"
+    },
+    "password": {
+      "title": "修改自己的密码",
+      "description": "修改密码会登出其它所有设备，因为改密码的常见原因就是它可能泄露了。",
+      "current": "当前密码",
+      "next": "新密码",
+      "repeat": "重复新密码",
+      "rule": "至少 {min} 个字符。",
+      "tooShort": "至少需要 {min} 个字符。",
+      "mismatch": "两次输入不一致。",
+      "required": "请输入当前密码。",
+      "submit": "修改密码",
+      "revokes": "其它会话会被登出。",
+      "changed": "密码已修改",
+      "changedHint": "其它设备已被登出。",
+      "failed": "修改密码失败"
+    },
+    "sessions": {
+      "title": "我的会话",
+      "description": "每个已登录设备一行。会话用令牌的摘要标识，令牌本身不会出现在这里。",
+      "current": "当前设备",
+      "signOutOthers": "登出其它设备",
+      "signedOutOthers": "已登出其它设备",
+      "signOutFailed": "登出其它设备失败",
+      "emptyTitle": "没有其它会话",
+      "emptyDescription": "当前只有这一台设备登录。"
+    },
+    "create": {
+      "title": "新增用户",
+      "description": "先给够用的最小角色，之后可以再提升。",
+      "usernameHint": "字母、数字、点、短横线与下划线，至少 3 个字符。",
+      "usernameInvalid": "至少需要 3 个字符。",
+      "password": "初始密码",
+      "roleHint": "上面的权限表说明了每个角色能做什么。"
+    },
+    "confirm": {
+      "deleteTitle": "删除这个账号？",
+      "deleteDescription": "输入 {username} 以确认。",
+      "deleteWarning": "账号及其打开的所有会话都会被移除。最后一个管理员无法删除。",
+      "signOutTitle": "登出其它设备？",
+      "signOutDescription": "除当前会话外的所有会话会立即失效。"
+    },
+    "toast": {
+      "created": "已创建用户 {username}",
+      "createFailed": "创建用户失败",
+      "roleChanged": "{username} 的角色已改为 {role}",
+      "roleFailed": "修改角色失败",
+      "deleted": "已删除用户 {username}",
+      "deleteFailed": "删除用户失败"
+    }
+  },
+  "apiKeys": {
+    "create": "创建密钥",
+    "createTitle": "创建 API Key",
+    "createDescription": "完整密钥只在创建后显示一次，关闭对话框前请先保存。",
+    "createFailed": "创建密钥失败",
+    "createdTitle": "密钥已创建",
+    "createdDescription": "请立即复制。服务端只保留前缀与密钥的哈希值。",
+    "createdWarning": "包括管理员在内，没有人能再次读取这个值。一旦丢失，只能撤销后重新创建。",
+    "createdKeyLabel": "完整密钥",
+    "createdAck": "我已妥善保存该密钥",
+    "createdDone": "完成",
+    "activeCount": "{count} 个可用密钥",
+    "field": {
+      "name": "名称",
+      "prefix": "前缀"
+    },
+    "nameHint": "取一个在审计日志里能认出来的名字，例如使用它的脚本或主机。",
+    "nameRequired": "请填写名称。",
+    "scopesHint": "密钥只能访问这里勾选的接口组。身份管理与 cookie 导入始终需要 identity:manage。",
+    "scopesRequired": "至少选择一个 scope。",
+    "scope": {
+      "douyinRead": "读取抖音数据",
+      "tiktokRead": "读取 TikTok 数据",
+      "identityManage": "管理身份池",
+      "admin": "完整管理权限",
+      "archiveRead": "读取内容归档",
+      "archiveExport": "导出整个归档",
+      "mediaRead": "查看已保存的媒体",
+      "mediaWrite": "保存与置顶媒体"
+    },
+    "scopeHint": {
+      "douyinRead": "抖音的作品、作者、评论与解析接口。",
+      "tiktokRead": "TikTok 的同类接口。",
+      "identityManage": "铸造、导入、测试与退休身份。普通读取密钥绝不应该拥有它。",
+      "admin": "包含配置与用户在内的全部权限，请谨慎授予。",
+      "archiveRead": "本实例已经采集到的全部内容，直接从本地存储返回。刻意与平台读取权限分开：开放某个平台接口不应等于开放整个数据集。",
+      "archiveExport": "一次请求遍历整个归档。这是唯一一个能把只读密钥变成数据库副本的调用。",
+      "mediaRead": "列出服务器磁盘上有什么、占用多少空间。文件本身永远不会通过 API 提供。",
+      "mediaWrite": "发起下载、置顶保护、取消下载。它会消耗身份配额并占用磁盘，因此任何只读权限都不隐含它。"
+    },
+    "rateLimitHint": "每分钟请求数。这是防滥用限额，不是计费额度：本项目没有套餐、用量计量或结算。它存在的唯一目的，是防止写错的脚本把整个身份池打穿。留空则沿用实例默认值。",
+    "rateLimitInvalid": "请输入 {min} 到 {max} 之间的整数，或者留空。",
+    "rateLimitPlaceholder": "60",
+    "rateLimitDefault": "实例默认值",
+    "rateLimitValue": "{value}/分钟",
+    "expiry": "有效期",
+    "expiryHint": "到期后密钥自动失效，可以限制无人察觉的泄露造成的损失。",
+    "expiryNever": "永不过期",
+    "expiryDays": "{count} 天",
+    "notBillingTitle": "关于这些密钥",
+    "notBillingBody": "密钥用于程序、脚本与 Agent 的鉴权。控制台自身使用会话 Cookie，不需要密钥。",
+    "noteScopes": "每次请求都会校验 scope，即使密钥属于管理员也一样。",
+    "notePrefix": "只有前缀以明文存储，密钥本身以 sha256 哈希保存，因此本页可以列出密钥，但永远无法显示原文。",
+    "noteRevoke": "撤销在下一次请求时即刻生效，不需要等待任何缓存过期。",
+    "revoke": "撤销",
+    "revokeTitle": "撤销该密钥？",
+    "revokeDescription": "使用 {name} 的调用会在下一次请求时返回 UNAUTHENTICATED。该操作不可撤销。",
+    "revokedToast": "密钥已撤销",
+    "revokeFailed": "撤销密钥失败",
+    "emptyTitle": "还没有 API Key",
+    "emptyDescription": "建议为每个脚本或 Agent 单独创建，这样泄露时只撤销其中一个即可，不影响其它调用方。",
+    "search": "按名称、前缀或 scope 搜索",
+    "filterStatus": "按状态筛选",
+    "filterScope": "按 scope 筛选",
+    "allStatuses": "全部状态",
+    "allScopes": "全部 scope",
+    "hiddenByFilter": "筛选条件隐藏了 {count} 个密钥",
+    "revokeSelected": "吊销选中的 {count} 个",
+    "bulkRevokeTitle": "确定吊销选中的密钥？",
+    "bulkRevokeBody": "这 {count} 个密钥会立即失效，正在使用它们的程序下一次调用就会收到 401。吊销无法撤销，需要的话请另行创建。",
+    "bulkRevokedToast": "已吊销 {count} 个密钥",
+    "demoNote": "演示 Key 之所以显示完整明文，是因为它本来就是公开的——任何试用这台实例的人都可以直接复制。它只能调用抖音和 TikTok 的爬虫接口，别的都不行。",
+    "demoWhy": "其它所有 Key 只显示前缀，这不是一个开关：服务端存的是摘要，根本没有明文可以还原。"
+  },
+  "playground": {
+    "catalogTitle": "接口",
+    "circuitAggregate": "{total} 个接口中有 {open} 个处于熔断。",
+    "circuitLabel": "熔断状态",
+    "contextDescription": "每隔数秒轮询一次，请求失败的那一刻看到的就是当前状态。",
+    "contextTitle": "接口与身份池",
+    "cookieCount": "{count, plural, other {# 条 cookie}}",
+    "cookieLabel": "本次发送的 cookie",
+    "cookieReveal": "显示完整 cookie",
+    "emptyDescription": "发起一次请求后，归一化结果与平台原始响应会并排显示在这里。",
+    "emptyTitle": "还没有发起调用",
+    "endpoint": {
+      "parse": "解析任意链接",
+      "video": "作品详情",
+      "comments": "作品评论",
+      "replies": "评论回复",
+      "user": "作者资料",
+      "posts": "作者作品列表",
+      "likes": "作者点赞列表",
+      "reposts": "作者转发的作品",
+      "collections": "收藏夹列表",
+      "collectionDetail": "单个收藏夹的信息",
+      "bookmarks": "收藏的作品（跨全部收藏夹）",
+      "collectionPosts": "收藏的作品（单个收藏夹）",
+      "mix": "作者自建合集（合辑 / 播放列表）",
+      "followers": "作者粉丝列表",
+      "following": "作者关注列表"
+    },
+    "endpointLabel": "接口",
+    "explainAbsent": "本次运行没有要求说明发出的是什么请求，所以这里没有内容可看。请求确实发生过，本实例也确切知道自己向上游发了什么。",
+    "explainCost": "开启它会导致一次缓存未命中——说明描述的是一次真实尝试，而命中缓存的响应并没有发起任何尝试——并会返回该身份自己的 cookie。",
+    "explainForbidden": "说明一次请求会返回该身份自己的 cookie 和带签名的上游 URL，所以需要 operator 角色。demo 和 viewer 会话无法使用；本实例也不会给出打码版本——去掉 cookie 和签名之后，剩下的内容请求日志里本来就有。",
+    "explainPending": "已开启 explain。发起请求后，此面板就会填上内容。",
+    "explainRun": "重新发起并说明本次请求",
+    "failureDescription": "错误码、承载本次请求的身份、熔断状态与身份池现状，集中在一处。",
+    "failureTitle": "这次调用为什么失败",
+    "healthUnavailable": "无法获取接口健康度。",
+    "historyEmpty": "你发起的调用会出现在这里。",
+    "historyRestore": "把这些参数填回表单，不会重新发送。",
+    "historyTitle": "本次会话",
+    "identityAuto": "任意身份（由调度器挑选）",
+    "identityLoggedIn": "已登录",
+    "metaTitle": "响应元数据",
+    "nextPage": "获取下一页",
+    "nextPageHint": "这一页带有游标。获取下一页会再消耗一次请求。",
+    "noRequestId": "未返回",
+    "normalizedDescription": "所有调用方看到的稳定契约。",
+    "normalizedTitle": "归一化结果",
+    "notANumber": "请输入数字。",
+    "oneOfRequired": "以下字段任填其一。",
+    "outOfRange": "请输入 {min} 到 {max} 之间的值。",
+    "param": {
+      "aweme_id": "作品 ID，与链接二选一。",
+      "comment_id": "要查看回复的那条评论。",
+      "count": "每页条数，最多 50。",
+      "cursor": "上一页返回的不透明游标，首页留空。",
+      "explain": "报告本次请求由哪个身份发出、使用了哪份 cookie，以及确切的上游 URL。会跳过缓存，且需要 operator 角色。",
+      "identity": "只用指定的这一个身份发送，不会换成别的。用于只有该账号能看到的内容。该请求永远不会由其他身份代发，也不会走缓存。",
+      "include_raw": "同时返回未经处理的平台原始响应。",
+      "mix_id": "合集 ID，可从合集或播放列表链接中获取。",
+      "needsRole": "需要 {role} 角色。当前登录的角色在此之下，所以这个参数不会被发送。",
+      "proxy": "让上游请求走这个代理。除非管理员开启了 security.request_proxy，否则会被拒绝。",
+      "refresh": "忽略缓存和正在进行的相同任务，重新向上游请求一次。不勾选时，在缓存窗口内重复调用是免费的：单个作品 30 分钟、作者主页 15 分钟、分页接口 5 分钟（设置页 cache.* 可改）。刷新会消耗一个身份和一次真实请求。",
+      "sec_user_id": "作者稳定 ID，与链接二选一。",
+      "url": "作品或主页链接，也可以直接粘贴分享文案。",
+      "wait": "服务端在同一连接上等待结果的秒数，超时则改为返回 task_id。"
+    },
+    "poolEmptyHint": "当前没有可用身份，在恢复之前请求会以 IDENTITY_POOL_EXHAUSTED 被拒绝。",
+    "poolInline": "可用 {active} · 冷却 {cooling} · 降级 {degraded}",
+    "poolLabel": "身份池",
+    "poolUnavailable": "无法获取身份池状态。",
+    "rawAbsent": "未请求",
+    "rawDescription": "平台自身返回的数据；解析器出问题时，它就是证据。",
+    "rawEnable": "带上原始响应重新请求",
+    "rawMissing": "本次调用没有请求原始响应。",
+    "rawTitle": "原始响应",
+    "requestDescription": "控制台使用你的会话 Cookie 调用；脚本则使用 API Key。",
+    "requestTitle": "请求",
+    "required": "必填。",
+    "retryAfter": "{seconds} 后重试。",
+    "samples": "样本数",
+    "section": {
+      "target": "目标",
+      "paging": "分页",
+      "request": "请求"
+    },
+    "send": "发起请求",
+    "servedBy": "承载身份",
+    "servedByPending": "请求日志还没有写入这一条。",
+    "servedByUnknown": "没有返回 request_id，说明请求没有进入调度器。",
+    "serverDuration": "服务端耗时",
+    "signatureDecode": "反解这些签名",
+    "signatureDecodeHint": "纯算术运算——不发起任何请求，也不消耗身份。",
+    "signatureDescription": "本次请求实际携带的签名参数，由 worker 针对平台自己的 URL 生成。",
+    "signatureNone": "本次请求没有携带任何签名参数。",
+    "signatureTitle": "签名",
+    "snippet": {
+      "curl": "curl",
+      "python": "Python",
+      "javascript": "JavaScript"
+    },
+    "snippetDescription": "由上方表单实时生成，把占位符换成你自己的 API Key 即可。",
+    "snippetNote": "控制台使用会话 Cookie 鉴权；在浏览器之外请使用 Authorization: Bearer 或 X-API-Key。",
+    "snippetTitle": "可直接复制的调用示例",
+    "taskState": "任务",
+    "upstreamCurl": "本次上游请求的 curl",
+    "upstreamCurlNote": "指向的是平台自己的接口，不是本 API。query 必须逐字节原样发送——重新编码就会改变签名覆盖的内容——并保留 User-Agent，两个平台都会把它计入签名。TikTok 还会校验 TLS 指纹与 User-Agent 是否自洽，因此无论签名多正确，裸 curl 在 TikTok 上都会被拒。"
+  },
+  "parse": {
+    "inputTitle": "链接",
+    "inputDescription": "每行一条，也可以用空格分隔。App 的分享文案可以原样粘贴。",
+    "inputLabel": "粘贴链接",
+    "inputHint": "单次最多 {max} 条，按每批 {chunk} 条提交。",
+    "tooMany": "链接过多：请控制在 {max} 条以内。",
+    "submit": "解析 {count} 条链接",
+    "submitFailed": "批量提交失败",
+    "notSubmitted": "服务端在建立任务之前就拒绝了这条链接。",
+    "taskFailed": "任务失败。",
+    "taskGone": "任务结果在读取之前已经过期。",
+    "trackingNote": "提交是一次批量请求；跟踪按条进行，每一行都可以单独重试。",
+    "emptyTitle": "暂无结果",
+    "emptyDescription": "在上方粘贴链接并解析，每条任务完成后会逐行出现在这里。",
+    "field": {
+      "url": "链接",
+      "title": "标题",
+      "author": "作者",
+      "kind": "类型",
+      "contentId": "作品 ID",
+      "plays": "播放",
+      "diggs": "点赞",
+      "comments": "评论",
+      "shares": "分享",
+      "publishedAt": "发布时间"
+    },
+    "exportCsv": "导出 CSV",
+    "exportJson": "导出 JSON",
+    "retryFailed": "重试失败项（{count}）",
+    "retryNotAllowed": "该错误不可恢复，重试只会白白消耗身份。",
+    "previewTitle": "预览",
+    "previewEmpty": "没有可预览的内容。",
+    "rawTitle": "结果数据",
+    "imageAlt": "图片 {index}",
+    "downloadTitle": "下载",
+    "downloadDescription": "文件由平台 CDN 直接传给浏览器，服务端不中转任何媒体流量。",
+    "downloadVideo": "视频",
+    "downloadCover": "封面",
+    "downloadImage": "图片 {index}",
+    "noVideo": "该结果没有视频流。",
+    "noCover": "没有封面图。",
+    "noImage": "没有图片。",
+    "mirrorCount": "{count} 个备用直链",
+    "mirrorTrying": "正在尝试第 {index} / {total} 个直链",
+    "mirrorDone": "已从第 {index} 个直链保存",
+    "mirrorBlocked": "被 CDN 拦截",
+    "downloadBlockedTitle": "浏览器无法直接取回该文件",
+    "downloadBlockedBody": "{count} 个直链全部拒绝跨域读取，这是 CORS 或防盗链限制，而不是链接失效。已在新标签页打开第一个直链：可以从那里另存为，或者开启可选的服务端下载代理。",
+    "downloadNote": "下载被拦截通常不代表文件失效：打开链接后在新标签页另存即可。",
+    "queue": {
+      "action": "{count, plural, =0 {保存到本实例} other {保存 # 个到本实例}}",
+      "one": "保存",
+      "done": "{count, plural, =0 {没有新增排队} other {已排队 # 个下载}}",
+      "detail": "{joined, plural, =0 {} other {# 个已经在这里了。}} {failed, plural, =0 {} other {# 个无法排队。}}",
+      "watch": "完成后会出现在下方列表里。",
+      "failed": "无法排队这些下载"
+    },
+    "detectedItems": "{count, plural, other {# 条链接}}待提交",
+    "detectedWithRejects": "{count, plural, other {# 条链接}}待提交 · {rejected, plural, other {# 行无法识别}}",
+    "rejected": {
+      "content_id": "只有作品 ID，没有平台信息。请改为粘贴链接，或指明它属于哪个平台。",
+      "bad_id": "看起来像作品 ID，但不可能是：两个平台的 ID 高位都是签发时的那一秒。",
+      "unknown": "这一行里没有抖音或 TikTok 链接。"
+    }
+  },
+  "logs": {
+    "tab": {
+      "requests": "请求日志",
+      "audit": "审计日志"
+    },
+    "live": "实时刷新",
+    "liveHint": "每隔数秒刷新一次。仔细看某一行时可以先关掉。",
+    "filtersTitle": "检索",
+    "filtersDescription": "所有条件都是可选的，留空表示不限。",
+    "range": "时间范围",
+    "rangeOption": {
+      "15": "最近 15 分钟",
+      "60": "最近 1 小时",
+      "360": "最近 6 小时",
+      "1440": "最近 24 小时",
+      "10080": "最近 7 天",
+      "43200": "最近 30 天"
+    },
+    "limit": "返回条数",
+    "field": {
+      "rejectReason": "拒绝原因",
+      "action": "操作",
+      "actor": "操作者",
+      "target": "对象",
+      "ip": "来源地址"
+    },
+    "byApiKey": "API Key",
+    "bySystem": "系统",
+    "emptyTitle": "该时间范围内没有请求",
+    "emptyDescription": "可以扩大时间范围，或清除某个筛选条件。",
+    "detailTitle": "请求详情",
+    "detailRaw": "原始记录",
+    "auditTitle": "审计检索",
+    "auditDescription": "记录谁改了什么。与请求日志分开存放，避免被日常流量淹没。",
+    "auditEmptyTitle": "暂无审计记录",
+    "auditEmptyDescription": "管理操作发生后会出现在这里。",
+    "auditDetailTitle": "审计记录",
+    "rejectReason": {
+      "circuit_open": "端点处于熔断中",
+      "no_identity": "没有可用或降级的身份",
+      "no_token": "所有身份配额均已用尽",
+      "all_inflight": "所有身份都在处理请求",
+      "queue_full": "等待队列已满",
+      "wait_timeout": "等待身份超时",
+      "pinned_unavailable": "指定的身份无法处理该请求"
+    }
+  },
+  "docs": {
+    "specTitle": "文档",
+    "specDescription": "由当前运行的实例生成，语言与控制台设置一致。",
+    "specUrl": "文档地址",
+    "operationCount": "{paths} 个路径 · {operations} 个操作",
+    "language": "语言",
+    "openSwagger": "打开 Swagger UI",
+    "openRedoc": "打开 ReDoc",
+    "openSpec": "打开原始文档",
+    "assetsFailedTitle": "Swagger UI 加载失败",
+    "assetsFailed": "无法从 CDN 获取 Swagger UI 资源。离线部署时这是预期行为：原始文档与服务端渲染的页面仍然可用。",
+    "emptyTitle": "文档中没有任何接口",
+    "emptyDescription": "这属于部署问题而不是数据为空：api 容器没有注册任何路由。"
+  },
+  "access": {
+    "title": "接口访问控制",
+    "description": "所有接口默认都需要 API Key，除非在此开放。管理、认证与初始化类接口无法开放。",
+    "openWarningTitle": "任何能访问到本服务器的人都可调用",
+    "filter": "按路径、说明或方法筛选",
+    "noMatch": "没有匹配的接口",
+    "locked": "始终受保护",
+    "lockedHint": "管理、认证与初始化类接口无论此页如何设置都会被服务端拒绝，因此不提供开关。",
+    "toggleLabel": "{endpoint} 需要 API Key",
+    "confirmTitle": "确定开放此接口？",
+    "confirmBody": "{endpoint} 将对任何能访问到本服务器的人开放。匿名调用只有读取权限并按来源地址限流，但每次调用仍会消耗本实例的身份池。",
+    "confirmAction": "确认开放",
+    "saved": "接口访问设置已更新",
+    "saveFailed": "接口访问设置更新失败",
+    "openCount": "{count, plural, =0 {未开放任何接口} other {已开放 # 个接口}}",
+    "openWarning": "你开放了 {count} 个接口。任何能访问到本服务器的人都能调用它们——只有读取权限，并按来源地址限流——但每次调用仍然会消耗本实例的身份池。",
+    "alwaysOpen": "无需凭据",
+    "alwaysOpenHint": "这个路由根本没有鉴权检查，无论本页怎么设置它都会响应任何人。这里没有开关可以关它——要关只能改代码。",
+    "group": {
+      "content": "内容读取",
+      "archive": "内容归档",
+      "downloads": "媒体下载",
+      "tasks": "任务",
+      "tools": "基础工具",
+      "admin": "管理",
+      "auth": "认证",
+      "setup": "初始化",
+      "system": "系统",
+      "ios": "iOS 快捷指令",
+      "other": "未分类"
+    },
+    "groupCount": "{count} 个接口",
+    "stateClosed": "需要 Key",
+    "stateOpen": "无需 Key",
+    "alwaysOpenTitle": "有 {count} 个接口没有鉴权检查",
+    "alwaysOpenBody": "无论本页怎么设置，这些接口都会响应任何人，因为要求凭证会让它们根本没法用——你没法先登录再去访问登录接口。这里没有开关能关掉它们，要关只能改代码。它们都不抓取任何内容，因此也都不消耗身份池。"
+  },
+  "tools": {
+    "title": "基础工具",
+    "description": "本服务每次请求都会用到的几块能力：链接解析、签名计算与游客身份铸造。",
+    "tab": {
+      "sign": "计算签名",
+      "parse": "解析链接",
+      "identity": "铸造身份",
+      "batch": "批量",
+      "decode": "反解签名"
+    },
+    "field": {
+      "platform": "平台",
+      "apiUrl": "API 地址",
+      "userAgent": "User-Agent",
+      "msToken": "msToken",
+      "link": "链接",
+      "proxy": "代理",
+      "cookies": "Cookie 集合"
+    },
+    "sign": {
+      "title": "为平台 API 地址计算签名",
+      "description": "纯算术运算，不发起任何请求，也不消耗身份。",
+      "urlHint": "包含查询参数的完整 API 地址。签名会追加在你提供的内容之后。",
+      "userAgentHint": "两个平台都会把它计入签名。留空则使用默认的 Chrome UA。",
+      "userAgentPlaceholder": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) ... Chrome/146.0.0.0 Safari/537.36",
+      "msTokenHint": "仅 TikTok 需要。它会被封进签名，因此必须与请求实际携带的 token 一致——填一个假的比不填更糟。",
+      "msTokenPlaceholder": "没有就留空",
+      "action": "计算签名",
+      "checklistTitle": "光有签名是不够的",
+      "checkUserAgent": "发送请求时必须使用签名时所用的那个 User-Agent —— 下方会回显。",
+      "checkTls": "TLS 指纹要与该 User-Agent 自洽。TikTok 会校验，直接用 curl 无论签名多正确都会被拒。",
+      "checkCookies": "必须携带 cookie。签名正确但不带 cookie 仍然返回空响应，因为平台响应的是一个会话。可在下一个标签页铸造。",
+      "signedUrl": "签名后的地址",
+      "added": "新增的参数（{algorithm}）",
+      "userAgentEcho": "请使用这个字符串原样发送请求。",
+      "cookiesHint": "请求将携带的 Cookie，任意粘贴格式均可。抖音的签名是对其中的访客 ID 计算的，缺少它就无法生成签名请求头。",
+      "cookiesPlaceholder": "UIFID_TEMP=...; s_v_web_id=...; msToken=...",
+      "headers": "签名所需的请求头",
+      "headersHint": "这些请求头必须与签名后的查询串一起发送。缺少它们时，抖音会拒绝受签名保护的接口。",
+      "stages": {
+        "title": "这个查询串是怎么拼出来的",
+        "description": "流水线的每一层各占一格，按运行顺序排列。没有执行的层也会列出，并给出原因。",
+        "name": {
+          "business": "你的参数",
+          "session": "会话 token",
+          "signature": "签名",
+          "websign": "访客签名"
+        },
+        "skipped": "未执行",
+        "reason": {
+          "no_uifid_cookie": "Cookie 中没有 uifid，因此无法计算抖音自己的签名，也就没有生成任何签名请求头。受签名保护的接口会以 uifid 为由拒绝该请求；可在下一个标签页铸造身份。",
+          "no_ms_token_supplied": "你没有提供 msToken，因此发送的是空值。TikTok 允许不带 token，但会校验带上的 token，所以这里不会伪造一个。"
+        },
+        "source": {
+          "label": "msToken 来源",
+          "url": "来自你提交的地址",
+          "cookies": "来自你提交的 Cookie",
+          "generated": "由本地伪造。抖音接受伪造的 token，TikTok 不接受——所以只有抖音会出现这一项。",
+          "absent": "未提供"
+        },
+        "role": {
+          "seal": "为请求签名",
+          "environment": "环境上报",
+          "constant": "固定常量，并非计算得出"
+        },
+        "sealParam": "真正为该请求签名的参数是 {param}。",
+        "inputNotReconstructible": "这一层所签名的字节与最终发送的字节不一定相同，因此不展示它所哈希的输入——还原出来的结果对大多数查询是对的，对其余的则会悄无声息地出错。",
+        "salt": "盐值",
+        "preimage": "md5 原文",
+        "preimageHint": "签名就是这段字符串的 md5。返回之前已重新计算并与签名核对过。",
+        "ran": "已执行",
+        "paramCount": "{count} 个参数",
+        "headerCount": "{count} 个请求头",
+        "column": {
+          "param": "参数",
+          "value": "值",
+          "role": "作用"
+        },
+        "headersAdded": "这一层新增的请求头",
+        "noParams": "这一层没有新增参数。",
+        "preimageUnverified": "校验时该原文无法复现这个签名，因此不予展示：一个无法验证的原文会被当作算法文档来引用。"
+      },
+      "exampleLabel": "从示例开始",
+      "exampleHint": "用一个真实浏览器请求填好下面所有字段。签名参数被去掉了，因为它们正是这个工具算出来的；Cookie 的值是占位符——一份 Cookie 就是一个活的登录态。真实的可以在“身份”标签页里铸造。",
+      "loadExample": "{platform} 主页请求",
+      "decodeThis": "反解这个签名"
+    },
+    "decode": {
+      "title": "反解签名",
+      "description": "与旁边那个表单互为逆运算。粘贴一条已签名的 URL，其中每个签名参数都会按它实际封住的那段字符串被拆开来读。",
+      "valueLabel": "签名值或已签名的 URL",
+      "valueHint": "粘贴完整的已签名 URL 最有用：只有这样才能确切知道每个参数覆盖了哪段字符串，也只有这样校验才跑得起来。单个参数值，或者 name=value 这样一对，同样可以。",
+      "valuePlaceholder": "https://www.douyin.com/aweme/v1/web/aweme/detail/?…&a_bogus=…",
+      "userAgentHint": "两个平台都会把 User-Agent 计入签名。填上它，结果就会告诉你正在发送的 UA 是不是签名时用的那个——这是手工构造请求时看起来完全正确却失败的最常见原因。",
+      "parameterLabel": "按什么参数解读",
+      "parameterHint": "保持自动时，会按其他参数都不具备的特征来识别。手里拿着不常见的东西时可以自己指定。",
+      "parameterAuto": "自动识别",
+      "action": "反解",
+      "resultTitle": "{count, plural, other {# 个参数}}",
+      "meaningTitle": "这里的「反解」指什么",
+      "meaningRecovered": "可还原——本来就在载荷里，原样取回：时钟、aid、page_id、页面上报的屏幕尺寸、SDK 版本、调用计数、随机数。",
+      "meaningBound": "已绑定但不可还原——载荷里带的是 query 或 User-Agent 的哈希，而不是它们本身。哈希不能倒推，所以这里不猜，而是拿你给的候选值去比对。",
+      "meaningIssued": "根本不是算出来的——msToken 和访客令牌由平台下发或随机生成，底下没有明文可挖，如实说明本身就是答案。",
+      "mismatch": "对不上",
+      "source": {
+        "url": "从你粘贴的 URL 中读出，因此每个参数都是按它实际封住的那段字符串校验的。",
+        "parameter": "按单个参数解读。粘贴完整的已签名 URL，才能校验它与所覆盖 query 是否一致。"
+      },
+      "checks": {
+        "title": "已校验的输入",
+        "bits": "{count} 位",
+        "covered": "本次签名实际覆盖的 {input} 原文。它复现出了上面的值，所以才展示出来。"
+      },
+      "check": {
+        "query": "Query",
+        "body": "请求体",
+        "user_agent": "User-Agent"
+      },
+      "column": {
+        "field": "字段",
+        "value": "值",
+        "kind": "类型"
+      },
+      "kind": {
+        "plain": "已还原",
+        "time": "时钟",
+        "digest": "哈希",
+        "checksum": "校验和",
+        "environment": "环境上报",
+        "opaque": "未解释"
+      },
+      "reason": {
+        "malformed": "这不是该参数的合法取值。未通过的结构检查是：",
+        "one_way": "这是一个 md5，里面没有可还原的内容。能做的是把它覆盖的那段字符串重建出来并加以确认——这其实更有用，因为你要自己签一个出来，需要复现的正是那段字符串。",
+        "not_computed": "由平台下发而非计算得出，底下没有明文。但它的形态仍然值得检查。",
+        "unknown_parameter": "当前版本不认识这个参数。"
+      },
+      "note": {
+        "checksum_verified": "内部校验和可复算通过。它的每一项输入本身都是载荷中的字段，所以能对上就意味着整个布局都正确还原了。",
+        "checksum_disagrees": "内部校验和复算不通过。要么该值在传输中被改动过，要么它出自与本实现不匹配的 SDK 版本。",
+        "mixed_verified": "折叠后的时间戳与随机数，和它们所折叠的那些字段是自洽的。",
+        "mixed_disagrees": "折叠后的时间戳与随机数，和旁边的字段对不上。",
+        "noise_not_recoverable": "有些字节是每次调用随机抽取的，不携带任何含义。同一毫秒内生成的两个签名大部分字节都不同，含义却完全一样。",
+        "key_travels_in_the_envelope": "信封里带着自己的密钥——平台正是这样解密它的，我们也正是因此才能读得懂。",
+        "constant_placeholder": "TikTok 网页端在每个 HTTP 请求上这里发的都是一个字面量；同名的真实算法只用于 websocket 握手。",
+        "superseded_by_a_bogus": "抖音已改用 a_bogus。TikTok 网页端仍接受这个参数，部分抖音接口也还认。",
+        "issued_by_the_platform": "由平台为浏览器签发。它算不出来，只能取得——在「身份」标签页铸造一个身份。"
+      }
+    },
+    "parse": {
+      "title": "识别链接",
+      "description": "不发起任何请求，直接解析出平台、资源类型与 ID。",
+      "hint": "分享链接，或包含链接的整段剪贴板文本。",
+      "action": "解析",
+      "result": "结果",
+      "shortLink": "这是短链。必须实际跟随跳转才能知道目标，因此请改为提交到 /parse 接口。"
+    },
+    "identity": {
+      "title": "铸造游客身份",
+      "description": "驱动真实浏览器访问平台，返回平台下发的 cookie。不做任何存储。",
+      "proxyHint": "通过该出口铸造，使 cookie 与你后续使用的地址一致。受 security.request_proxy 设置约束。",
+      "action": "铸造",
+      "slow": "耗时数十秒：需要启动浏览器、加载页面并等待其脚本执行完毕。",
+      "cookies": "Cookie",
+      "cookiesHint": "请整套一起使用。其中 msToken 与 UIFID_TEMP 是任何算法都无法生成的。",
+      "fingerprint": "指纹",
+      "fingerprintHint": "请使用该 User-Agent 发送请求。cookie 与 UA 不匹配的身份比没有身份更弱。"
+    },
+    "batch": {
+      "title": "批量解析 ID",
+      "description": "把粘贴进来的一列链接和作品 ID 分门别类，不发起任何请求。不消耗身份，也没有任何数据离开这台机器。",
+      "field": "链接与 ID",
+      "hint": "一行一个，空行和重复行会自动去掉。作品 ID 里带着它被签发的那一秒，所以输入错误会在这里就被指出来，而不是变成一次上游请求。",
+      "action": "{count, plural, =0 {解析} other {解析 # 行}}",
+      "copyIds": "复制所有 ID",
+      "copied": "ID 已复制",
+      "truncated": "只解析了前 {total} 行，剩下的请分批提交。",
+      "kind": {
+        "content_id": "作品 ID",
+        "link": "链接",
+        "short_link": "短链接",
+        "bad_id": "不是有效 ID",
+        "unknown": "无法识别"
+      },
+      "column": {
+        "input": "输入",
+        "kind": "识别结果",
+        "platform": "平台",
+        "id": "ID",
+        "minted": "ID 签发时间"
+      }
+    }
+  },
+  "downloads": {
+    "title": "下载",
+    "description": "本实例保存在自己磁盘上的媒体。文件写入服务器的媒体卷，本页面为它们建立索引，已存下的文件也可以从这里保存到本地。",
+    "unavailableTitle": "下载器未运行",
+    "unavailable": "无法连接到下载器容器。",
+    "unavailableHint": "用 --profile downloader 启动它并设置 DTK_DOWNLOADER_URL。本实例的其他功能不受影响，缺的只是抓取文件这一步。",
+    "evicted": "已清理",
+    "evictedHint": "为了控制媒体容量上限，文件已被删除。记录保留，重新请求一次即可重新下载。",
+    "pin": "置顶",
+    "pinned": "已置顶",
+    "pinHint": "按容量清理时保住这些文件。这是唯一能阻止它们被删除的方式。",
+    "unpinHint": "取消置顶，让容量清理可以删除这些文件。",
+    "metric": {
+      "stored": "已占用磁盘",
+      "ofCeiling": "上限 {ceiling}",
+      "noCeiling": "未设置上限，不会自动清理",
+      "downloads": "下载数",
+      "inFlight": "{count, plural, other {进行中 #}}",
+      "pinned": "已置顶",
+      "pinnedHint": "永远不会被容量清理删除",
+      "evicted": "已清理",
+      "evictedHint": "文件已删除，记录保留"
+    },
+    "start": {
+      "title": "保存作品媒体",
+      "action": "开始保存",
+      "sinkNote": "文件写入服务器的媒体卷。不会按需去抓取任何东西——保存时读的是它已经落盘的那一份，且需要 media:read 权限。这是你磁盘上的存档，不是代理。"
+    },
+    "field": {
+      "platform": "平台",
+      "contentId": "内容 ID",
+      "contentIdHint": "归档中保存的作品 ID。如果还没有，请先解析一次该作品。"
+    },
+    "column": {
+      "content": "作品",
+      "state": "状态",
+      "files": "文件数",
+      "size": "大小",
+      "finished": "完成时间",
+      "keep": "保留",
+      "retry": "重试",
+      "platform": "平台"
+    },
+    "filter": {
+      "allStates": "全部状态",
+      "allPlatforms": "全部平台"
+    },
+    "empty": {
+      "title": "还没有保存任何内容",
+      "description": "可以在上方开始一个。文件写入服务器的媒体卷，按 平台/作者/作品 的结构存放，旁边附带 meta.json。"
+    },
+    "toast": {
+      "started": "已开始下载",
+      "startFailed": "无法开始下载",
+      "pinned": "已置顶，清理时会跳过",
+      "unpinned": "已取消置顶",
+      "fetchingFirst": "本实例还没有这个作品，正在先抓取再下载",
+      "reused": {
+        "in_flight": "这个作品正在下载中",
+        "already_stored": "已经下载过了，无需重复"
+      }
+    },
+    "file": {
+      "sha256": "SHA-256",
+      "none": "这个作品没有保存下任何文件。",
+      "open": "保存这个文件"
+    },
+    "bulk": {
+      "pin": "固定选中的 {count} 项",
+      "unpin": "取消固定 {count} 项",
+      "delete": "删除选中的 {count} 项",
+      "pinned": "已固定 {count} 项",
+      "unpinned": "已取消固定 {count} 项",
+      "deleted": "已删除 {count} 项",
+      "deleteTitle": "确定删除选中的下载？",
+      "deleteBody": "这 {count} 项的文件会从媒体卷上删除。记录会保留并标明「文件已清理」，这样你才分得清它和「从来没抓过」的区别——重新请求这次下载就能把文件取回来。",
+      "deleteConfirm": "删除文件"
+    },
+    "dedupe": {
+      "title": "重复下载",
+      "description": "重复下载同一个作品是常事——第一次失败了、链接过期了、文件被淘汰了——每次尝试都会留下一条记录。这里会为每个作品保留最新的一份，删掉其余的。",
+      "action": "检查重复项",
+      "none": "没有任何作品被下载过两次",
+      "confirmTitle": "确定删除 {count} 条重复记录？",
+      "confirmBody": "每个作品保留最新的一份；只有当没有任何保留下来的记录还在用同一个目录时，该目录才会被删除——所以两次下载写到同一个位置时，记录会删掉、文件会留下。此操作不可撤销。",
+      "confirmAction": "确认删除",
+      "done": "已删除 {count} 条重复记录，释放 {size}"
+    },
+    "comments": {
+      "done": "已保存 {count} 条评论",
+      "failed": "评论保存失败"
+    },
+    "author": {
+      "done": "已排队 {queued} / {posts} 个",
+      "failed": "无法为该作者的作品排队",
+      "doneSkipping": "已排队 {queued} / {posts} 个，{skipped} 个本地已有"
+    },
+    "target": {
+      "unrecognised": "这不是本实例能识别的链接",
+      "expected": {
+        "video": "这是主页链接。请粘贴作品链接，或者改用“保存该作者的作品”。",
+        "user": "这是作品链接。请改为粘贴作者的主页链接或 sec_user_id。"
+      }
+    },
+    "mode": {
+      "post": {
+        "label": "单个作品",
+        "description": "粘贴链接或作品 ID。如果本实例没见过这个作品，会先抓取再下载。链接不会决定去连接哪个主机——它只会和本程序认识的平台做匹配，实际用到的只有里面的作品 ID。",
+        "field": "链接或作品 ID",
+        "hint": "可以是分享链接、包含链接的分享文案，或者纯作品 ID。链接自带平台信息；纯 ID 需要用左边的菜单指定。",
+        "placeholder": "https://www.douyin.com/video/7408915107113127220",
+        "action": "保存媒体"
+      },
+      "batch": {
+        "label": "批量作品",
+        "description": "有多少作品链接就粘多少。每条单独解析——一条失效不会连累整批——解析完可以一次性全部保存到本实例。",
+        "field": "链接",
+        "hint": "一行一条，或用空格、逗号分隔。",
+        "placeholder": "",
+        "action": "解析"
+      },
+      "comments": {
+        "label": "评论",
+        "description": "读取一个作品的评论并保存为 JSON 文件。评论是数据不是媒体，所以它下载到你的浏览器，而不是服务器的媒体卷。",
+        "field": "链接或作品 ID",
+        "hint": "最多翻 5 页、每页 50 条，走身份池读取。每一页都是一次真实请求。",
+        "placeholder": "https://www.douyin.com/video/7408915107113127220",
+        "action": "保存评论"
+      },
+      "author": {
+        "label": "作者的作品",
+        "description": "把某个作者最近一页的作品全部排队下载。粘贴他的主页链接即可，平台信息从链接里来。",
+        "field": "主页链接或作者 ID",
+        "hint": "可以是主页链接，也可以是资料库和调试台里给你的那串 sec_user_id。链接自带平台信息；纯 ID 需要用左边的菜单指定。",
+        "placeholder": "https://www.douyin.com/user/MS4wLjABAAAA… 或 MS4wLjABAAAA…",
+        "action": "排队下载"
+      }
+    },
+    "skipExisting": {
+      "label": "跳过已下载的内容",
+      "hint": "直接返回本实例已有的那一份，而不是重新抓取。重跑一次 feed 时想要的正是这个：作者新发了三个作品，另外四十个早就在本地了。已被淘汰的副本不算——那里已经没有字节可跳过了。"
+    },
+    "depth": {
+      "label": "下载多少个",
+      "hint": "从最新的开始，自动翻页直到取够这么多。每个作品都是一次下载，每翻一页都是一次走身份池的读取。",
+      "count": "最新的 {count} 个",
+      "all": "全部（feed 给多少取多少）"
+    },
+    "progress": {
+      "files": "{done}/{total} 个文件",
+      "hint": "按文件数统计而不是字节：平台声明的大小 sidecar 并不采信，所以没有一个可以拿来做分母的总量。"
+    },
+    "retry": {
+      "action": "重试",
+      "hint": "从头重新抓取这个作品。没有断点续传——媒体链接带签名且会过期，已下载的部分接不上去。",
+      "started": "正在重新下载",
+      "failed": "重试失败"
+    }
+  },
+  "library": {
+    "title": "资料库",
+    "description": "本实例已经采集到的全部内容，直接从本地存储返回。不消耗身份、不发起请求，作品即使已经被平台删除，这里也还在。",
+    "untitled": "无标题",
+    "export": "导出",
+    "storeMedia": "保存到本实例",
+    "metric": {
+      "posts": "作品数",
+      "postsHint": "除非你删除，否则一直保留",
+      "authors": "作者数",
+      "gone": "已消失",
+      "goneHint": "平台上已删除，这里还留着",
+      "storedOf": "已下载 {stored} / {total}",
+      "noneStored": "还没有下载任何一个"
+    },
+    "filter": {
+      "title": "查找作品",
+      "description": "多个筛选条件可以叠加。搜索按标题或描述的子串匹配，所以中文和英文的表现是一致的。",
+      "search": "搜索",
+      "searchPlaceholder": "标题或描述里的词",
+      "searchHint": "按子串匹配而不是按词匹配：Postgres 的全文检索不会切分中文，按词搜索会在主力平台上静默地匹配不到任何东西。",
+      "anyPlatform": "全部平台",
+      "anyKind": "全部类型",
+      "anyDuration": "全部时长",
+      "anyAvailability": "全部状态",
+      "action": "搜索",
+      "clear": "清空",
+      "storedLabel": "本地文件",
+      "anyStored": "下载与否不限",
+      "storedOnly": "仅已下载",
+      "notStoredOnly": "仅未下载",
+      "activeCount": "有 {count} 个筛选条件生效",
+      "noneActive": "未筛选，显示全部"
+    },
+    "column": {
+      "post": "作品",
+      "kind": "类型",
+      "duration": "时长",
+      "availability": "可用性",
+      "published": "发布时间",
+      "lastSeen": "最后见到"
+    },
+    "kind": {
+      "video": "视频",
+      "image_album": "图文"
+    },
+    "duration": {
+      "short": "一分钟以内",
+      "medium": "三分钟以内",
+      "long": "长视频",
+      "unknown": "未知"
+    },
+    "availability": {
+      "live": "正常",
+      "deleted": "已删除",
+      "private": "已私密",
+      "unknown": "未知"
+    },
+    "detail": {
+      "author": "作者",
+      "firstSeen": "首次见到",
+      "orientation": "画面方向",
+      "resolution": "清晰度",
+      "script": "文字语种",
+      "music": "音乐",
+      "location": "位置",
+      "openOnPlatform": "在平台上打开",
+      "goneHint": "这个作品在平台上已经没有了。这里保留的是本实例当时看到的样子。",
+      "savedNoVideo": "这个作品的媒体已保存，但没有视频文件——图集类作品保存的是图片。",
+      "exportFiles": "导出已保存的文件"
+    },
+    "page": {
+      "previous": "上一页",
+      "next": "下一页",
+      "number": "第 {page} 页"
+    },
+    "empty": {
+      "title": "还没有归档任何内容",
+      "description": "作品会在被解析时自动归档。用解析工具或接口解析一个作品，它就会出现在这里。"
+    },
+    "toast": {
+      "stored": "已开始保存。完成后会出现在「下载」列表里，这里也会出现播放器。",
+      "storeFailed": "无法开始下载",
+      "exported": "{count, plural, other {已导出 # 条}}",
+      "exportFailed": "导出失败",
+      "recheckStarted": "正在检查哪些作品还在",
+      "backfillStarted": "正在回溯该作者的历史",
+      "addedToCollection": "{count, plural, =0 {已经在该合集中} other {已加入 # 个作品}}",
+      "removedFromCollection": "已从合集移出 {count} 个作品",
+      "deleted": "已删除 {count} 个作品，释放 {size}",
+      "deleteFailed": "没有删除任何内容"
+    },
+    "orientationValue": {
+      "portrait": "竖屏",
+      "landscape": "横屏",
+      "square": "方形",
+      "unknown": "未知"
+    },
+    "resolutionValue": {
+      "sd": "标清",
+      "hd": "高清",
+      "fhd": "全高清",
+      "uhd": "4K",
+      "unknown": "未知"
+    },
+    "scriptValue": {
+      "cjk": "中日韩文字",
+      "latin": "拉丁字母",
+      "mixed": "混合",
+      "unknown": "未知"
+    },
+    "recheck": "重新检查",
+    "recheckHint": "验证最久没检查过的作品是否还在平台上。每个都是一次真实请求，所以在后台运行。",
+    "backfill": "回溯这位作者的历史",
+    "backfillHint": "翻过第一页，把这位作者的历史作品全部归档。",
+    "view": {
+      "label": "视图",
+      "grid": "封面",
+      "table": "表格"
+    },
+    "group": {
+      "label": "分组方式",
+      "none": "不分组",
+      "author": "按作者",
+      "saved": "按保存日期",
+      "unsaved": "未保存到本地",
+      "count": "{count} 个作品"
+    },
+    "card": {
+      "noCover": "没有封面",
+      "savedHint": "已存在本实例磁盘上"
+    },
+    "storeAgain": "已保存 · 重新抓取",
+    "storedHint": "已经在本实例磁盘上，{size}。重新抓取会用新的一份替换它。",
+    "collection": {
+      "manage": "合集",
+      "any": "全部合集",
+      "filterLabel": "合集",
+      "name": "名称",
+      "namePlaceholder": "待剪辑",
+      "create": "创建",
+      "created": "合集已创建",
+      "deleted": "合集已删除",
+      "itemCount": "{count, plural, =0 {空} other {# 个作品}}",
+      "emptyTitle": "还没有合集",
+      "emptyDescription": "合集是你手动分的一组作品。资料库里其他的分组方式——作者、平台、保存时间——都是从作品本身算出来的。",
+      "deleteHint": "删除合集只是删掉这个标签，里面的作品仍留在归档中，文件也仍在磁盘上。",
+      "confirmTitle": "确定删除这个合集？",
+      "confirmBody": "将删除“{name}”。其中的作品仍保留在归档中，文件也不会被删除。"
+    },
+    "bulk": {
+      "label": "批量操作",
+      "count": "已选 {count} 项",
+      "selectOne": "选择 {title}",
+      "selectPage": "选中本页",
+      "clear": "取消选择",
+      "addTo": "加入合集",
+      "removeFrom": "从当前合集移出",
+      "noCollections": "还没有合集",
+      "delete": "删除"
+    },
+    "delete": {
+      "title": "确定删除这些作品？",
+      "body": "将从本实例删除 {count} 个作品，以及为它们保存的所有媒体文件。平台上的原作品不受影响。此操作不可撤销，也没有回收站。",
+      "action": "删除"
+    },
+    "exportVideo": "导出视频文件"
+  },
+  "watchlist": {
+    "title": "关注列表",
+    "description": "本实例按定时重复采集的目标。正是它让快照历史变成真正的时间序列，而不是「谁碰巧解析过什么」的散点。",
+    "pauseAll": "全部暂停",
+    "pauseConfirm": "{count, plural, other {确定暂停全部 # 个关注目标？}}已经采集到的内容不受影响，它们只是不再运行，直到你重新启用。",
+    "paused": "已暂停",
+    "remove": "移除",
+    "neverRun": "尚未运行",
+    "failing": "{count, plural, other {连续失败 # 次}}",
+    "toggleLabel": "定时采集 {target}",
+    "offTitle": "定时采集已全局关闭",
+    "offHint": "watchlist.enabled 设置为关闭，因此无论这些条目怎么配置都不会运行。可在「设置」中重新打开。",
+    "metric": {
+      "entries": "关注目标",
+      "enabled": "{count, plural, other {运行中 #}}",
+      "runs": "运行次数",
+      "runsHint": "自加入以来采集到的观测次数",
+      "failing": "失败中",
+      "failingHint": "会以越来越长的间隔重试，直到恢复"
+    },
+    "add": {
+      "title": "关注一个目标",
+      "description": "关注作者会采集其新作品与粉丝数；关注作品会采集它自己的数据变化。两者最终都会写入归档和快照历史。",
+      "action": "关注",
+      "costHint": "每个条目只要存在，就会按计划持续消耗身份池。采集任务和其他请求走同一个队列，因此永远给正在等待的调用方让路。"
+    },
+    "field": {
+      "platform": "平台",
+      "kind": "关注",
+      "target": "目标",
+      "targetHint": {
+        "author": "作者的稳定 ID——抖音是 sec_user_id，TikTok 是数字 ID。不要填抖音号，用户会改。",
+        "content": "作品 ID，和归档里保存的一致。"
+      },
+      "interval": "每隔"
+    },
+    "kind": {
+      "author": "一个作者",
+      "content": "一个作品"
+    },
+    "column": {
+      "target": "目标",
+      "interval": "间隔",
+      "next": "下次运行",
+      "runs": "运行次数",
+      "health": "上次运行",
+      "enabled": "运行中"
+    },
+    "empty": {
+      "title": "还没有关注任何目标",
+      "description": "在上方添加一个作者，本实例就会按计划采集他的新作品，把快照历史该有的增长曲线补齐。"
+    },
+    "toast": {
+      "added": "已开始关注，首次采集已入队",
+      "addFailed": "无法关注该目标",
+      "removed": "已停止关注。已经采集到的内容全部保留。",
+      "paused": "{count, plural, other {已暂停 # 个目标}}"
+    }
+  },
+  "scheduler": {
+    "pool": {
+      "active": "当前可被调度",
+      "cooling": "因风控命中而暂歇，冷却到期会自动回到可用",
+      "degraded": "冷却已到上限。最后手段，只在没有可用身份时才会启用"
+    },
+    "rotationTitle": "一次请求是怎么挑身份的",
+    "rotationDescription": "五道关卡，按此顺序。五道全过才会拿到租约；否则连同原因一起被拒绝，这个原因会记进请求日志。",
+    "stage": {
+      "circuit": "接口熔断。至少要有 sched.circuit_min_identities 个不同身份同时失败才会触发，所以一个坏身份不会把接口对所有人关掉。熔断期间每个间隔只放行一次探测，其余请求直接拒绝，不消耗任何配额。",
+      "rank": "排序：先按健康档位，再按最久未使用，最后按每次调用生成的抖动。档位刻意做得粗——按精确分数排序会让最健康的那一个永远胜出，那是热点而不是轮换。",
+      "inflight": "每个身份同时只能有一个在途请求。真实会话本来就不是并发的，而这才是真正阻止单个身份吸走一整波流量的限制。",
+      "quota": "按（身份，接口）各自一个令牌桶。列表类接口每秒回填 0.12 个，也就是说无论排了多少请求，单个身份大约八秒才能发一次。",
+      "outcome": "结果会回写：成功清空连续失败计数；命中风控则按逐次翻倍的退避冷却该身份；而业务错误——比如作品已删除——刻意什么都不改。"
+    },
+    "fairness": "排序的目标是「没有哪个身份被系统性偏袒」，而不是严格轮询。真正的轮流需要一个全局定序器，因为多个并发调用者会在任何一个拿到租约之前读到同一份「最近使用」快照。",
+    "fairnessMeasured": "与均匀随机基线相比，实测得到的分散度并不优于随机。调度器真正保证、并且被测试严格断言的，是互斥、配额，以及没有身份被饿死。",
+    "section": {
+      "sched": "等待时长、冷却与接口熔断。",
+      "pool": "要保持多少个身份，以及什么样的身份才算数。"
+    },
+    "overridesTitle": "这些值从哪来",
+    "overrides": "{count, plural, =0 {本页的每个值都来自内置默认或环境变量种子。} other {其中 # 项已存进数据库，覆盖了对应的环境变量种子。}}"
+  },
+  "about": {
+    "contact": {
+      "title": "联系方式",
+      "body": "两个渠道，按建议尝试的先后排列。",
+      "issuesLabel": "问题反馈",
+      "issuesAction": "GitHub Issues",
+      "issuesWhy": "公开、有记录，遇到过同样问题的人也能回答你。",
+      "emailLabel": "邮箱",
+      "emailWhy": "直达作者本人。适合不方便公开的内容。",
+      "authorLabel": "作者"
+    },
+    "copyright": "© 2022–{year} Evil0ctal 及贡献者",
+    "description": "这是什么、谁做的，以及你可以拿它做什么。",
+    "donate": {
+      "title": "赞赏作者",
+      "body": "上面的赞助商付的是项目的钱，这里是给维护它的人的。",
+      "tokens": "这些网络都支持常见的主流代币。TRC20 或 Solana 上的 USDT 最方便接收，手续费也最低。",
+      "network": "只能按地址所属的网络转账。转错链的资产任何人都无法找回。",
+      "evm": "以太坊和 BNB Smart Chain 共用同一个地址，这是正常的：两者都是 EVM 链，由同一把私钥控制。"
+    },
+    "egg": {
+      "hint": "每个项目都有一个。",
+      "found": "找到了。这些图是从 shields.io 拉的，所以刚才它们不在这儿 —— 这个控制台的其他每一个页面都不对外说话。",
+      "privacy": "清掉站点数据就能收回去。",
+      "shield": {
+        "stars": "GitHub 星标数",
+        "forks": "GitHub fork 数",
+        "commit": "最近一次提交",
+        "release": "最新发布版",
+        "pulls": "Docker Hub 拉取数",
+        "licence": "许可协议"
+      }
+    },
+    "licence": {
+      "title": "许可协议：Apache 2.0",
+      "body": "你可以使用、修改和分发这个软件，包括商业用途，也包括放进闭源产品里。这项授权是不可撤销的。作为交换，它对你有三点要求：",
+      "notice": "分发任何副本时，保留版权声明和许可协议全文。",
+      "changes": "在你改动过的文件里，说明你改了什么。",
+      "warranty": "接受它不提供任何担保。出了问题由你自己承担。"
+    },
+    "link": {
+      "repo": "GitHub 源码",
+      "issues": "反馈问题",
+      "license": "阅读许可协议"
+    },
+    "request": {
+      "title": "作者的一个请求",
+      "body": "这个项目是免费送出去的，它之所以能一直免费，是因为有赞助商而不是因为向用户收费。如果你靠它赚到了钱，请考虑也赞助一下，而不是只拿。",
+      "note": "这是一个请求，不是许可条款。Apache 2.0 允许商业用途，这里的任何文字都不会把这项权利收回去——你完全可以拒绝，并且照样继续使用。"
+    },
+    "responsibility": {
+      "title": "你需要自己负责的部分",
+      "body": "它从有自己服务条款的平台抓取数据，并且运行在你自己控制的机器上。请遵守平台条款和所在地法律，尊重你所收集内容背后的人，不要拿它去骚扰任何人，也不要拿它去二次分发不属于你的作品。这些没有别人能替你把关。"
+    },
+    "sponsor": {
+      "title": "赞助商",
+      "body": "他们付费出现在这里，让这个项目可以一直免费开源。",
+      "pitch": "社交媒体数据与 API 市场——抖音、TikTok、小红书、Instagram、YouTube 等。",
+      "become": "想赞助这个项目，请访问 github.com/sponsors/evil0ctal。",
+      "label": "赞助商"
+    },
+    "tagline": "自部署的抖音与 TikTok 数据接口，以及运行它的控制台。",
+    "title": "关于"
+  },
+  "mcp": {
+    "title": "MCP",
+    "description": "把 AI 代理接到这个实例上。工具、身份池、限流都和 REST 接口共用同一套。",
+    "endpoint": {
+      "title": "接入地址",
+      "body": "根据你打开这个页面时用的地址自动生成。",
+      "transport": "传输方式：",
+      "auth": "认证：",
+      "authValue": "API Key，放在 Authorization 或 X-API-Key 请求头里",
+      "slash": "末尾的斜杠要保留。/mcp 会 307 跳转到 /mcp/，而不会在跳转后重发 POST 的客户端，报的错看起来像是认证失败。",
+      "host": "127.0.0.1 只对本机上的代理有效。跑在别处的代理需要一个它真能访问到的地址，并且这个实例要挂在 TLS 后面。",
+      "cookie": "这里不接受控制台的会话 Cookie。MCP 只认 API Key，所以浏览器里已经登录的状态不能当凭证用。"
+    },
+    "noKeys": "现在还没有任何 API Key，而 MCP 只认这个。请到「访问控制 → API Key」创建一个，勾上你希望代理能访问的平台读权限。",
+    "configure": {
+      "title": "客户端配置",
+      "body": "选一个客户端。地址已经替你填好了，Key 没有。",
+      "client": "客户端",
+      "keyNote": "凡是出现 dtk_YOUR_API_KEY 的地方都换成真实的 Key——Codex 则是设置片段里那个环境变量。Key 只在创建时显示一次，之后再也看不到，丢了就重新建一个，别费劲去找。"
+    },
+    "client": {
+      "claudeCode": {
+        "name": "Claude Code",
+        "where": "执行一次即可，它会把这个服务写进 Claude Code 的配置。加上 --scope project 可以改为写进当前仓库。"
+      },
+      "claudeDesktop": {
+        "name": "Claude Desktop",
+        "where": "claude_desktop_config.json 只认 stdio 服务，而 Claude Desktop 的远程连接器走 OAuth，本服务不支持——所以这里通过 mcp-remote 中转，需要本机装有 Node。设置 → 开发者 → 编辑配置，合并后重启应用。"
+      },
+      "codex": {
+        "name": "Codex CLI",
+        "where": "追加到 ~/.codex/config.toml，并在启动 Codex 的终端里 export DTK_API_KEY。Key 从环境变量读取，配置文件本身可以放心提交。"
+      },
+      "cherry": {
+        "name": "Cherry Studio",
+        "where": "设置 → MCP 服务器 → 添加服务器 → 从 JSON 导入。Cherry Studio 把这种传输方式叫 streamableHttp。"
+      },
+      "generic": {
+        "name": "其他客户端",
+        "where": "任何支持 streamable-http 的客户端。它需要发出的请求长这样："
+      },
+      "stdio": {
+        "name": "stdio（本机，不走 HTTP）",
+        "where": "给自己拉起进程的代理用。它通过管道走 JSON-RPC，读取和 API 进程完全相同的环境变量，所以两边不会对着不同的数据库。"
+      }
+    },
+    "tools": {
+      "title": "工具",
+      "body": "代理能调用的东西。每一个都和 REST 调用一样消耗身份池。"
+    },
+    "tool": {
+      "parse_url": "解析链接指向的任何内容。手上有 URL 时从这里开始。",
+      "get_video": "按 ID 获取单个作品，视频或图集。",
+      "get_user": "获取作者资料。",
+      "list_user_posts": "分页列出某作者的作品。",
+      "list_comments": "分页列出某作品的一级评论。",
+      "get_content_history": "读取某作品或作者已记录的指标历史。",
+      "pool_status": "身份池与接口健康度，调用开始失败时看这个。",
+      "get_task_result": "取回没能在限时内完成的那次调用的结果。"
+    },
+    "usage": {
+      "title": "写提示词的人需要知道的",
+      "async": "每个工具都会自己等结果。如果一次调用还没跑完，它会返回一个 task id 而不是一直阻塞，再用 get_task_result 取回——代理不需要自己写轮询循环。",
+      "scopes": "Key 受限于它创建时勾选的权限，即使拥有者是管理员也一样。只有 douyin:read 的 Key，通过 MCP 一样访问不了 TikTok。",
+      "paging": "列表类工具是分页的。要下一页请用它返回的 cursor，而不是把 count 调大——服务端的说明里专门提醒了代理别这么干。",
+      "rest": "同样这些能力的 REST 版本"
+    },
+    "toolCount": "{count} 个工具"
+  },
+  "demo": {
+    "banner": {
+      "title": "演示模式。",
+      "body": "当前是所有人共用的只读体验账号。你在这里做的任何操作都不会被保存，涉及凭据的页面也已隐藏。需要完整控制台请自行部署一套。",
+      "deploy": "自行部署"
+    }
+  },
+  "updates": {
+    "notice": {
+      "title": "有新版本",
+      "body": "当前实例运行的是 {current}，最新发布版本是 {latest}。",
+      "how": "更新就是拉镜像加重启——见自述文档的「更新」一节。数据、设置和身份池都不受影响。",
+      "releaseNotes": "更新说明"
+    }
+  }
+}
