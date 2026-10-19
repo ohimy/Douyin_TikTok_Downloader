@@ -33,14 +33,15 @@ if errorlevel 1 (
 for %%D in ("!NODE_EXE!") do set "PATH=%%~dpD;!PATH!"
 
 call :find_chrome
-if not defined CHROME_EXE (
+call :find_edge
+if not defined CHROME_EXE if not defined EDGE_EXE (
   echo Google Chrome was not found. Installing it for isolated account login...
   call :require_winget || goto :failed
   call :install_package Google.Chrome "Google Chrome" || goto :failed
   call :find_chrome
 )
-if not defined CHROME_EXE (
-  echo Chrome is required for the desktop app's QR-code and password login window.
+if not defined CHROME_EXE if not defined EDGE_EXE (
+  echo Install Chrome or Microsoft Edge for the desktop app's QR-code and password login window.
   goto :failed
 )
 
@@ -56,7 +57,7 @@ set "VENV_PYTHON=%CD%\.venv\Scripts\python.exe"
 
 echo.
 echo Build succeeded: dist\DouyinLocalAPI.exe
-echo The executable opens the native Windows management window. Chrome is used for account login.
+echo The executable opens the native Windows management window. Chrome is preferred and Edge is supported for account login.
 goto :done
 
 :find_python
@@ -89,6 +90,13 @@ exit /b 1
 set "CHROME_EXE="
 for %%C in ("%ProgramFiles%\Google\Chrome\Application\chrome.exe" "%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe" "%LocalAppData%\Google\Chrome\Application\chrome.exe") do (
   if not defined CHROME_EXE if exist "%%~fC" set "CHROME_EXE=%%~fC"
+)
+exit /b 0
+
+:find_edge
+set "EDGE_EXE="
+for %%E in ("%ProgramFiles%\Microsoft\Edge\Application\msedge.exe" "%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe" "%LocalAppData%\Microsoft\Edge\Application\msedge.exe") do (
+  if not defined EDGE_EXE if exist "%%~fE" set "EDGE_EXE=%%~fE"
 )
 exit /b 0
 

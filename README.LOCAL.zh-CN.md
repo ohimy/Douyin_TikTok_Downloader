@@ -5,7 +5,7 @@
 - `GET /api/v1/douyin/users/{sec_user_id}/posts`：获取博主主页作品，支持 `cursor` 和 `count` 分页；
 - `GET /api/v1/douyin/videos/{aweme_id}`：按作品 ID 获取作品详情；
 - `POST /api/v1/cookies`：实时替换 Cookie，下一次请求立即使用新 Cookie。
-- `POST /api/v1/accounts/login`：打开本机 Chrome，扫码或手动登录一个抖音账号并自动保存会话；
+- `POST /api/v1/accounts/login`：打开本机隔离浏览器窗口，扫码或手动登录一个抖音账号并自动保存会话；
 - `GET /dashboard`：本地管理面板，集中显示服务、账号、检查结果与重登入口；`GET /api/v1/dashboard` 可供内网监控读取脱敏状态。
 - `GET /api/v1/accounts`：查看登录账号、失效和检查状态；`POST /api/v1/accounts/{account_id}/relogin` 可重新登录。
 - `GET /api/v1/xhs/users/{user_id}/posts`：获取小红书博主主页作品列表；
@@ -27,17 +27,17 @@ python -m local_api.main
 
 ## 多账号网页登录
 
-Windows 机器需要安装 Google Chrome。Windows exe 启动后会显示原生桌面管理窗口：它显示服务状态、监听地址、**可直接复制给内网设备访问的 IPv4 地址**、账号总览、抖音/小红书数量、Cookie 最近检查时间、错误提示和重登入口；每 15 秒刷新一次，但不会显示 Cookie 或小红书临时令牌。原生窗口可一键复制内网 Web 面板地址；Web 面板的“服务信息”区域也会显示相同的内网地址。窗口中的“打开 Web 面板”按钮可访问 `http://127.0.0.1:8787/dashboard`（旧地址 `/accounts` 仍可使用）。
+Windows 机器需要安装 Google Chrome 或 Microsoft Edge。Windows exe 启动后会显示原生桌面管理窗口：它显示服务状态、监听地址、**可直接复制给内网设备访问的 IPv4 地址**、账号总览、抖音/小红书数量、Cookie 最近检查时间、错误提示和重登入口；每 15 秒刷新一次，但不会显示 Cookie 或小红书临时令牌。原生窗口可一键复制内网 Web 面板地址；Web 面板的“服务信息”区域也会显示相同的内网地址。窗口中的“打开 Web 面板”按钮可访问 `http://127.0.0.1:8787/dashboard`（旧地址 `/accounts` 仍可使用）。
 
-在面板选择抖音或小红书，输入账号备注并点击登录，程序会打开独立的 Chrome 配置目录。请在该窗口完成扫码或密码登录；小红书会额外验证“当前用户”接口，访客 Cookie 不会被误判为登录成功。验证成功后窗口自动关闭，账号会在列表中显示为 `active`。Cookie 不会显示在页面或接口响应中。
+在面板选择抖音或小红书，输入账号备注并点击登录，程序会打开独立的浏览器配置目录。请在该窗口完成扫码或密码登录；小红书会额外验证“当前用户”接口，访客 Cookie 不会被误判为登录成功。验证成功后窗口自动关闭，账号会在列表中显示为 `active`。Cookie 不会显示在页面或接口响应中。优先使用 Chrome，未安装时自动尝试 Windows Edge；浏览器位于非标准目录时，可设置 `DOUYIN_LOCAL_API_BROWSER_PATH=C:\\Path\\To\\browser.exe`。
 
 服务每 15 分钟检查已激活账号；你也可以在列表点击“检查”。确定失效的账号会显示 `needs_login`，点击“重新登录”即可打开该账号的新登录窗口。校验成功后，列表与 `GET /api/v1/accounts` 会显示所属账号的头像和昵称。两个平台的 Cookie 与浏览器配置彼此隔离；每个作品接口都可提交 `account_id` 指定使用某个登录账号，未指定时使用该平台最近更新的有效账号。
 
 ## Windows 生成 exe
 
-PyInstaller 不能从 macOS 交叉生成可靠的 Windows 可执行文件。把已开发好的项目复制到 Windows 后，双击或在命令行运行 [`build_windows.bat`](build_windows.bat)。脚本会先检测 Python 3.11+、Node.js 20+ 和 Google Chrome；缺少时会通过 Windows `winget` 自动静默安装，再创建虚拟环境、安装 Python 依赖并打包。首次在干净电脑运行时，Windows 可能显示安装或 UAC 提示；系统没有 `winget` 时，脚本会停止并提示先安装 Microsoft App Installer。
+PyInstaller 不能从 macOS 交叉生成可靠的 Windows 可执行文件。把已开发好的项目复制到 Windows 后，双击或在命令行运行 [`build_windows.bat`](build_windows.bat)。脚本会先检测 Python 3.11+、Node.js 20+ 与可用的 Chromium 浏览器（Chrome 或 Edge）；缺少的构建依赖会通过 Windows `winget` 自动静默安装，再创建虚拟环境、安装 Python 依赖并打包。首次在干净电脑运行时，Windows 可能显示安装或 UAC 提示；系统没有 `winget` 时，脚本会停止并提示先安装 Microsoft App Installer。
 
-成品是 `dist\\DouyinLocalAPI.exe`，可直接运行并打开 Windows 原生管理窗口；首次提交 Cookie 后会在 exe 同级目录建立 `data\\accounts.json`。成品为无控制台窗口程序；如需排障，可从命令提示符启动或临时使用源码运行。最终运行 exe 无需 Python 或 Node.js，但仍保留 Chrome 以便打开隔离登录窗口。
+成品是 `dist\\DouyinLocalAPI.exe`，可直接运行并打开 Windows 原生管理窗口；首次提交 Cookie 后会在 exe 同级目录建立 `data\\accounts.json`。成品为无控制台窗口程序；如需排障，可从命令提示符启动或临时使用源码运行。最终运行 exe 无需 Python 或 Node.js，但需要 Chrome 或 Edge 以便打开隔离登录窗口。
 
 需要固定端口或数据目录时，可在启动前设置：
 

@@ -499,7 +499,7 @@ class DouyinClient:
 
 
 class BrowserLoginManager:
-    """Opens one local Chrome profile per account for QR-code/manual login."""
+    """Opens one isolated local browser profile per account for manual login."""
 
     def __init__(self, files: RuntimeFiles) -> None:
         self.files = files
@@ -512,6 +512,42 @@ class BrowserLoginManager:
         # candidates; the self-info probe below decides whether login succeeded.
         "xhs": ("https://www.xiaohongshu.com/", ("a1", "web_session")),
     }
+
+    @staticmethod
+    def _browser_launch_options() -> dict[str, str]:
+        """Find a locally installed Chromium browser without Playwright downloads.
+
+        Chrome is preferred, Edge is the Windows fallback, and an administrator
+        may pin a non-standard executable with ``DOUYIN_LOCAL_API_BROWSER_PATH``.
+        This avoids the brittle Playwright ``channel='chrome'`` lookup that
+        assumes one particular Chrome installation directory.
+        """
+        configured = os.getenv("DOUYIN_LOCAL_API_BROWSER_PATH", "").strip().strip('"')
+        candidates = [Path(configured)] if configured else []
+        if os.name == "nt":
+            local_app_data = os.getenv("LOCALAPPDATA", "")
+            program_files = os.getenv("PROGRAMFILES", "")
+            program_files_x86 = os.getenv("PROGRAMFILES(X86)", "")
+            for root in (local_app_data, program_files, program_files_x86):
+                if not root:
+                    continue
+                candidates.extend((
+                    Path(root) / "Google" / "Chrome" / "Application" / "chrome.exe",
+                    Path(root) / "Microsoft" / "Edge" / "Application" / "msedge.exe",
+                ))
+        elif sys.platform == "darwin":
+            candidates.extend((
+                Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
+                Path("/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge"),
+            ))
+
+        for candidate in candidates:
+            if candidate.is_file():
+                return {"executable_path": str(candidate)}
+        raise RuntimeError(
+            "No supported browser was found. Install Google Chrome or Microsoft Edge, "
+            "or set DOUYIN_LOCAL_API_BROWSER_PATH to its executable path."
+        )
 
     async def start(
         self, label: str, *, platform: Literal["douyin", "xhs"] = "douyin", account_id: str | None = None
@@ -535,7 +571,7 @@ class BrowserLoginManager:
             "account_id": account_id,
             "status": "logging_in",
             "platform": platform,
-            "message": "Chrome has been opened; finish login there and poll /api/v1/accounts.",
+            "message": "A dedicated browser window has been opened; finish login there and poll /api/v1/accounts.",
         }
 
     async def _run(self, account_id: str, platform: str) -> None:
@@ -551,12 +587,13 @@ class BrowserLoginManager:
                 )
                 return
             async with async_playwright() as playwright:
-                # `chrome` uses the user's installed Chrome rather than a second,
-                # separately downloaded browser. Each account keeps its own profile.
+                # Each account keeps a separate browser profile. The executable
+                # is discovered locally so the packaged app needs no Playwright
+                # browser download and can fall back to Windows Edge.
                 context = await playwright.chromium.launch_persistent_context(
                     str(self.files.browser_profiles_dir / account_id),
-                    channel="chrome",
                     headless=False,
+                    **self._browser_launch_options(),
                 )
                 # A re-login must not immediately succeed by reading a stale session.
                 await context.clear_cookies()
@@ -628,7 +665,7 @@ class BrowserLoginManager:
                 raise HTTPException(status_code=503, detail="Browser link resolution is unavailable.") from exc
             async with async_playwright() as playwright:
                 context = await playwright.chromium.launch_persistent_context(
-                    str(profile_dir), channel="chrome", headless=False,
+                    str(profile_dir), headless=False, **self._browser_launch_options(),
                 )
                 page = context.pages[0] if context.pages else await context.new_page()
                 await page.goto(url, wait_until="domcontentloaded", timeout=30000)
@@ -672,7 +709,7 @@ class BrowserLoginManager:
             from playwright.async_api import async_playwright
             async with async_playwright() as playwright:
                 context = await playwright.chromium.launch_persistent_context(
-                    str(profile_dir), channel="chrome", headless=False,
+                    str(profile_dir), headless=False, **self._browser_launch_options(),
                 )
                 page = context.pages[0] if context.pages else await context.new_page()
 
