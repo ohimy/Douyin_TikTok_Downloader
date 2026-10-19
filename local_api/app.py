@@ -538,6 +538,7 @@ class BrowserLoginManager:
     def __init__(self, files: RuntimeFiles) -> None:
         self.files = files
         self._tasks: dict[str, asyncio.Task[None]] = {}
+        self._xhs_resolution_locks: dict[str, asyncio.Lock] = {}
         self.on_login: Callable[[str], Awaitable[dict[str, Any]]] | None = None
 
     _LOGIN_TARGETS: Mapping[str, tuple[str, tuple[str, ...]]] = {
@@ -723,13 +724,16 @@ class BrowserLoginManager:
                 with suppress(Exception):
                     await context.close()
 
-    async def resolve_xhs_identifier(
+    async def resolve_xhs_identifier_silently(
         self, kind: Literal["user", "note"], identifier: str, account_id: str
     ) -> dict[str, str]:
-        """Let the signed-in page load an ID and capture its XHS request fields.
+        """Try to obtain an XHS token in a hidden browser, never a popup window.
 
-        Xiaohongshu issues the xsec token client-side.  Capturing the page's own
-        request avoids requiring callers to supply that transient value.
+        XHS tokens are emitted by the site at request time and cannot be derived
+        from an ID alone. A serialized, headless visit is the best automatic
+        fallback after the normal post-list token cache. The site may still
+        refuse to issue one for an arbitrary direct note ID; that is returned as
+        a clear 422 rather than opening a visible error page.
         """
         account = self.files.account(account_id)
         if account is None or account.get("platform", "douyin") != "xhs":
@@ -742,62 +746,71 @@ class BrowserLoginManager:
                 status_code=409,
                 detail="This account has no local browser profile. Please log in through /accounts first.",
             )
-        target_url = (
-            f"https://www.xiaohongshu.com/user/profile/{identifier}"
-            if kind == "user" else f"https://www.xiaohongshu.com/explore/{identifier}"
-        )
-        captured: list[dict[str, str]] = []
-        context = None
-        try:
-            from playwright.async_api import async_playwright
-            async with async_playwright() as playwright:
-                context = await playwright.chromium.launch_persistent_context(
-                    str(profile_dir), headless=False, **self._browser_launch_options(),
-                )
-                page = context.pages[0] if context.pages else await context.new_page()
 
-                def capture(request: Any) -> None:
-                    parsed = urlparse(request.url)
-                    endpoint = parsed.path
-                    if kind == "user" and endpoint.endswith("/user_posted"):
-                        params = parse_qs(parsed.query)
-                        token = (params.get("xsec_token") or [""])[0]
-                        if token:
-                            captured.append({"xsec_token": token, "xsec_source": (params.get("xsec_source") or ["pc_user"])[0]})
-                    elif kind == "note" and endpoint.endswith("/feed"):
-                        try:
-                            payload = json.loads(request.post_data or "{}")
-                        except json.JSONDecodeError:
-                            return
-                        token = payload.get("xsec_token")
-                        if isinstance(token, str) and token:
+        lock = self._xhs_resolution_locks.setdefault(account_id, asyncio.Lock())
+        async with lock:
+            target_url = (
+                f"https://www.xiaohongshu.com/user/profile/{identifier}"
+                if kind == "user" else f"https://www.xiaohongshu.com/explore/{identifier}"
+            )
+            captured: list[dict[str, str]] = []
+            context = None
+            try:
+                from playwright.async_api import async_playwright
+                async with async_playwright() as playwright:
+                    context = await playwright.chromium.launch_persistent_context(
+                        str(profile_dir), headless=True, **self._browser_launch_options(),
+                    )
+                    page = context.pages[0] if context.pages else await context.new_page()
+
+                    def capture(request: Any) -> None:
+                        parsed = urlparse(request.url)
+                        if kind == "note" and parsed.path.endswith("/feed"):
+                            try:
+                                payload = json.loads(request.post_data or "{}")
+                            except json.JSONDecodeError:
+                                return
+                            token = payload.get("xsec_token")
                             source = payload.get("xsec_source")
-                            captured.append({"xsec_token": token, "xsec_source": source if isinstance(source, str) else "pc_user"})
+                            if isinstance(token, str) and token:
+                                captured.append({
+                                    "xsec_token": token,
+                                    "xsec_source": source if isinstance(source, str) else "pc_user",
+                                })
+                        elif kind == "user" and parsed.path.endswith("/user_posted"):
+                            params = parse_qs(parsed.query)
+                            token = (params.get("xsec_token") or [""])[0]
+                            if token:
+                                captured.append({
+                                    "xsec_token": token,
+                                    "xsec_source": (params.get("xsec_source") or ["pc_user"])[0],
+                                })
 
-                page.on("request", capture)
-                await page.goto(target_url, wait_until="domcontentloaded", timeout=30000)
-                for _ in range(12):
-                    parsed = urlparse(page.url)
-                    params = parse_qs(parsed.query)
-                    token = (params.get("xsec_token") or [""])[0]
-                    if token:
-                        return {"xsec_token": token, "xsec_source": (params.get("xsec_source") or ["pc_user"])[0]}
-                    if captured:
-                        return captured[-1]
-                    await page.wait_for_timeout(500)
-        except HTTPException:
-            raise
-        except Exception as exc:
-            raise HTTPException(status_code=502, detail=f"Could not resolve Xiaohongshu ID: {exc}") from exc
-        finally:
-            if context is not None:
-                with suppress(Exception):
-                    await context.close()
+                    page.on("request", capture)
+                    await page.goto(target_url, wait_until="domcontentloaded", timeout=30000)
+                    for _ in range(12):
+                        if captured:
+                            return captured[-1]
+                        await page.wait_for_timeout(500)
+            except HTTPException:
+                raise
+            except Exception as exc:
+                raise HTTPException(
+                    status_code=502,
+                    detail=f"Could not silently resolve Xiaohongshu token: {exc}",
+                ) from exc
+            finally:
+                if context is not None:
+                    with suppress(Exception):
+                        await context.close()
         raise HTTPException(
             status_code=422,
-            detail="Xiaohongshu did not issue an xsec_token for this ID. Open its current page or use resolve-link with a share URL.",
+            detail=(
+                "Xiaohongshu did not issue a token for this note ID. Provide its current "
+                "share URL to POST /api/v1/xhs/resolve-link or pass xsec_token explicitly. "
+                "No browser window was opened."
+            ),
         )
-
 
 def _upstream_error(payload: Mapping[str, Any]) -> HTTPException | None:
     code = payload.get("status_code")
@@ -1110,18 +1123,6 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
             raise HTTPException(status_code=502, detail=message) from exc
         return result
 
-    async def xhs_request_fields(
-        kind: Literal["user", "note"], identifier: str, account_id: str | None,
-        xsec_token: str | None, xsec_source: str | None,
-    ) -> tuple[str, str, str]:
-        selected_account_id = account_id or files.default_account_id("xhs")
-        if not selected_account_id:
-            raise HTTPException(status_code=409, detail="No active Xiaohongshu account is available")
-        if xsec_token:
-            return selected_account_id, xsec_token, xsec_source or "pc_user"
-        fields = await logins.resolve_xhs_identifier(kind, identifier, selected_account_id)
-        return selected_account_id, fields["xsec_token"], fields["xsec_source"]
-
     def xhs_account_id(account_id: str | None) -> str:
         selected_account_id = account_id or files.default_account_id("xhs")
         if not selected_account_id:
@@ -1177,16 +1178,17 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         xsec_source: Literal["pc_search", "pc_user", "pc_feed"] | None = None,
         account_id: str | None = Query(default=None, max_length=64),
     ) -> dict[str, Any]:
-        """Return the detail record for one Xiaohongshu note ID."""
+        """Return detail without ever opening a browser for an API request."""
         selected_account_id = xhs_account_id(account_id)
         if xsec_token:
             token, source = xsec_token, xsec_source or "pc_user"
         else:
             cached = files.xhs_note_token(selected_account_id, note_id)
             if cached is None:
-                selected_account_id, token, source = await xhs_request_fields(
-                    "note", note_id, selected_account_id, None, None
+                fields = await logins.resolve_xhs_identifier_silently(
+                    "note", note_id, selected_account_id
                 )
+                token, source = fields["xsec_token"], fields["xsec_source"]
             else:
                 token, source = cached
         return await xhs_call(
