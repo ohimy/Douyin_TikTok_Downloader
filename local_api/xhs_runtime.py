@@ -45,6 +45,15 @@ class XhsRiskControlError(RuntimeError):
         super().__init__(f"Xiaohongshu risk control response: {detail}")
 
 
+class XhsTokenRequiredError(RuntimeError):
+    """The supplied note/profile token is absent, stale, or rejected."""
+
+    def __init__(self, platform_code: int | str | None = None) -> None:
+        self.platform_code = platform_code
+        detail = f" (code {platform_code})" if platform_code is not None else ""
+        super().__init__(f"Xiaohongshu needs a fresh xsec_token{detail}")
+
+
 class XhsClient:
     """Synchronous signed XHS client; API handlers run it in a worker thread."""
 
@@ -136,10 +145,13 @@ class XhsClient:
     def _reject_if_failed(payload: dict[str, Any]) -> None:
         if payload.get("success") is not True:
             code = payload.get("code")
-            # These documented-in-the-wild payload codes accompany risk and
-            # verification pages even when the HTTP layer itself is 200.
-            if str(code) in {"300012", "300031"}:
+            # 300012 is an IP/session risk response. 300031 instead means the
+            # note cannot be opened with this token and must not trigger the
+            # rate-limit circuit breaker.
+            if str(code) == "300012":
                 raise XhsRiskControlError(200, code)
+            if str(code) == "300031":
+                raise XhsTokenRequiredError(code)
             message = payload.get("msg") or "Xiaohongshu rejected the request"
             raise RuntimeError(f"Xiaohongshu error {code}: {message}")
 

@@ -8,6 +8,7 @@ so replacing it through the API takes effect immediately.
 from __future__ import annotations
 
 import asyncio
+import copy
 import importlib.util
 import ipaddress
 import json
@@ -34,7 +35,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field, field_validator
 
-from local_api.xhs_runtime import XhsClient, XhsRiskControlError, XhsRuntimeUnavailable
+from local_api.xhs_runtime import (
+    XhsClient,
+    XhsRiskControlError,
+    XhsRuntimeUnavailable,
+    XhsTokenRequiredError,
+)
 from local_api.dashboard import DASHBOARD_HTML
 
 # These two modules are from the checked-out upstream project.  They are pure
@@ -237,7 +243,7 @@ class XhsRequestGate:
     gate does not alter fingerprints or retry verification challenges.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, state_path: Path | None = None) -> None:
         self.min_interval_seconds = self._seconds_from_env(
             "XHS_MIN_REQUEST_INTERVAL_SECONDS", default=8.0, minimum=1.0, maximum=120.0
         )
@@ -245,10 +251,38 @@ class XhsRequestGate:
             "XHS_RISK_COOLDOWN_SECONDS", default=300.0, minimum=30.0, maximum=3600.0
         )
         self.max_cooldown_seconds = 3600.0
+        self._state_path = state_path
         self._lock = asyncio.Lock()
         self._last_started = 0.0
         self._cooldown_until = 0.0
         self._risk_streak = 0
+        self._restore_state()
+
+    def _restore_state(self) -> None:
+        if self._state_path is None:
+            return
+        try:
+            state = json.loads(self._state_path.read_text(encoding="utf-8"))
+            blocked_until = float(state.get("blocked_until_epoch", 0))
+            self._cooldown_until = time.monotonic() + max(0.0, blocked_until - time.time())
+            self._risk_streak = min(max(int(state.get("risk_streak", 0)), 0), 4)
+        except (OSError, ValueError, TypeError, json.JSONDecodeError, AttributeError):
+            return
+
+    def _persist_state(self) -> None:
+        if self._state_path is None:
+            return
+        remaining = max(0.0, self._cooldown_until - time.monotonic())
+        state = {
+            "blocked_until_epoch": time.time() + remaining,
+            "risk_streak": self._risk_streak,
+        }
+        try:
+            RuntimeFiles._atomic_json_write(self._state_path, state)
+        except OSError:
+            # The in-memory breaker remains correct even if local persistence
+            # is temporarily unavailable (for example, out of disk space).
+            return
 
     @staticmethod
     def _seconds_from_env(name: str, *, default: float, minimum: float, maximum: float) -> float:
@@ -282,6 +316,7 @@ class XhsRequestGate:
                     self.max_cooldown_seconds,
                 )
                 self._cooldown_until = time.monotonic() + cooldown
+                self._persist_state()
                 raise XhsRequestCoolingDown(
                     int(cooldown), upstream_status=exc.status_code
                 ) from exc
@@ -289,6 +324,7 @@ class XhsRequestGate:
                 # A successful request gradually returns the session to its
                 # base risk level instead of instantly allowing a burst.
                 self._risk_streak = max(0, self._risk_streak - 1)
+                self._persist_state()
                 return result
 
     def status(self) -> dict[str, int | float]:
@@ -298,6 +334,60 @@ class XhsRequestGate:
             "min_interval_seconds": self.min_interval_seconds,
             "cooldown_remaining_seconds": remaining,
             "risk_streak": self._risk_streak,
+        }
+
+
+class XhsReadCache:
+    """Short-lived, in-memory response cache with same-key request coalescing."""
+
+    def __init__(self) -> None:
+        self.posts_ttl_seconds = self._seconds_from_env("XHS_POSTS_CACHE_SECONDS", 120.0)
+        self.notes_ttl_seconds = self._seconds_from_env("XHS_NOTE_CACHE_SECONDS", 600.0)
+        self._entries: dict[str, tuple[float, dict[str, Any]]] = {}
+        self._inflight: dict[str, asyncio.Task[dict[str, Any]]] = {}
+        self._lock = asyncio.Lock()
+
+    @staticmethod
+    def _seconds_from_env(name: str, default: float) -> float:
+        try:
+            return min(max(float(os.getenv(name, str(default))), 0.0), 3600.0)
+        except ValueError:
+            return default
+
+    async def get_or_load(
+        self, key: str, *, ttl_seconds: float, loader: Callable[[], Awaitable[dict[str, Any]]]
+    ) -> dict[str, Any]:
+        now = time.monotonic()
+        async with self._lock:
+            cached = self._entries.get(key)
+            if cached and cached[0] > now:
+                return copy.deepcopy(cached[1])
+            task = self._inflight.get(key)
+            owner = task is None
+            if task is None:
+                task = asyncio.create_task(loader())
+                self._inflight[key] = task
+
+        try:
+            result = await task
+        finally:
+            if owner:
+                async with self._lock:
+                    self._inflight.pop(key, None)
+
+        if owner and ttl_seconds > 0:
+            async with self._lock:
+                self._entries[key] = (time.monotonic() + ttl_seconds, copy.deepcopy(result))
+        return copy.deepcopy(result)
+
+    def status(self) -> dict[str, int | float]:
+        now = time.monotonic()
+        valid_entries = sum(expires_at > now for expires_at, _ in self._entries.values())
+        return {
+            "posts_ttl_seconds": self.posts_ttl_seconds,
+            "notes_ttl_seconds": self.notes_ttl_seconds,
+            "entries": valid_entries,
+            "inflight": len(self._inflight),
         }
 
 
@@ -368,6 +458,13 @@ class RuntimeFiles:
         token = entry.get("token")
         source = entry.get("source")
         return (token, source) if isinstance(token, str) and token and isinstance(source, str) else None
+
+    async def delete_xhs_note_token(self, account_id: str, note_id: str) -> None:
+        """Discard one expired/rejected transient token before resolving a fresh one."""
+        async with self._write_lock:
+            entries = self._load_xhs_note_tokens()
+            entries.pop(f"{account_id}:{note_id}", None)
+            self._atomic_json_write(self.xhs_note_tokens_path, {"tokens": entries})
 
     @staticmethod
     def _public_account(account: Mapping[str, Any]) -> dict[str, Any]:
@@ -1082,7 +1179,8 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     request_audit = RequestAuditLog(files.data_dir)
     client = DouyinClient(files)
     xhs_client = XhsClient()
-    xhs_request_gate = XhsRequestGate()
+    xhs_request_gate = XhsRequestGate(files.data_dir / "xhs-risk-state.json")
+    xhs_read_cache = XhsReadCache()
     logins = BrowserLoginManager(files)
     app = FastAPI(
         title="Douyin Local API",
@@ -1093,6 +1191,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     app.state.logins = logins
     app.state.xhs_client = xhs_client
     app.state.xhs_request_gate = xhs_request_gate
+    app.state.xhs_read_cache = xhs_read_cache
     app.state.request_audit = request_audit
     app.state.started_at = datetime.now(timezone.utc)
     app.state.started_monotonic = time.monotonic()
@@ -1257,6 +1356,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
                 "uptime_seconds": round(time.monotonic() - app.state.started_monotonic),
                 "check_interval_seconds": app.state.account_check_interval,
                 "xhs_request_pacing": xhs_request_gate.status(),
+                "xhs_response_cache": xhs_read_cache.status(),
                 "listen_address": f"http://{app.state.listen_host}:{app.state.listen_port}",
                 "intranet_addresses": _intranet_addresses(app.state.listen_port, app.state.listen_host),
                 "data_dir": str(files.data_dir),
@@ -1352,6 +1452,11 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
                 ),
                 headers={"Retry-After": str(exc.retry_after_seconds)},
             ) from exc
+        except XhsTokenRequiredError as exc:
+            raise HTTPException(
+                status_code=422,
+                detail="小红书拒绝了当前 xsec_token；请使用当前分享链接或重新获取笔记令牌。",
+            ) from exc
         except XhsRuntimeUnavailable as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
         except (RuntimeError, ValueError) as exc:
@@ -1387,42 +1492,50 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     ) -> dict[str, Any]:
         """Return one page of a creator's published Xiaohongshu notes."""
         selected_account_id = xhs_account_id(account_id)
-        if xsec_token:
-            token, source = xsec_token, xsec_source or "pc_user"
-        else:
-            # Logged-in user_posted accepts an empty token. Prefer it because it
-            # avoids a browser window and supports the requested ID-only API.
-            token, source = "", "pc_user"
-        try:
-            result = await xhs_call(
-                selected_account_id, xhs_client.user_posts, user_id, cursor=cursor, count=count,
-                xsec_token=token, xsec_source=source,
-            )
-        except HTTPException as exc:
-            # Most creator pages accept an empty token. If this specific page
-            # does not, retry once after silent, headless token resolution. An
-            # explicit caller token is never replaced or retried automatically.
-            if xsec_token or exc.status_code != 502:
-                raise
-            fields = await logins.resolve_xhs_identifier_silently(
-                "user", user_id, selected_account_id
-            )
-            token, source = fields["xsec_token"], fields["xsec_source"]
-            result = await xhs_call(
-                selected_account_id, xhs_client.user_posts, user_id, cursor=cursor, count=count,
-                xsec_token=token, xsec_source=source,
-            )
-        items = result.get("items")
-        if isinstance(items, list):
-            await files.cache_xhs_note_tokens(selected_account_id, items, source=source)
-            # The service consumes the platform token internally; callers only
-            # need the note ID from the list to request a detail record later.
-            result["items"] = [
-                {key: value for key, value in item.items() if key != "xsec_token"}
-                if isinstance(item, Mapping) else item
-                for item in items
-            ]
-        return result
+
+        async def load_posts() -> dict[str, Any]:
+            if xsec_token:
+                token, source = xsec_token, xsec_source or "pc_user"
+            else:
+                # Logged-in user_posted accepts an empty token. Prefer it because it
+                # avoids a browser window and supports the requested ID-only API.
+                token, source = "", "pc_user"
+            try:
+                result = await xhs_call(
+                    selected_account_id, xhs_client.user_posts, user_id, cursor=cursor, count=count,
+                    xsec_token=token, xsec_source=source,
+                )
+            except HTTPException as exc:
+                # Most creator pages accept an empty token. If this specific page
+                # does not, retry once after silent, headless token resolution. An
+                # explicit caller token is never replaced or retried automatically.
+                if xsec_token or exc.status_code not in (422, 502):
+                    raise
+                fields = await logins.resolve_xhs_identifier_silently(
+                    "user", user_id, selected_account_id
+                )
+                token, source = fields["xsec_token"], fields["xsec_source"]
+                result = await xhs_call(
+                    selected_account_id, xhs_client.user_posts, user_id, cursor=cursor, count=count,
+                    xsec_token=token, xsec_source=source,
+                )
+            items = result.get("items")
+            if isinstance(items, list):
+                await files.cache_xhs_note_tokens(selected_account_id, items, source=source)
+                # The service consumes the platform token internally; callers only
+                # need the note ID from the list to request a detail record later.
+                result["items"] = [
+                    {key: value for key, value in item.items() if key != "xsec_token"}
+                    if isinstance(item, Mapping) else item
+                    for item in items
+                ]
+            return result
+
+        return await xhs_read_cache.get_or_load(
+            f"posts:{selected_account_id}:{user_id}:{cursor}:{count}",
+            ttl_seconds=xhs_read_cache.posts_ttl_seconds,
+            loader=load_posts,
+        )
 
     @app.get("/api/v1/xhs/notes/{note_id}", tags=["Xiaohongshu"])
     async def xhs_note_detail(
@@ -1433,20 +1546,41 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     ) -> dict[str, Any]:
         """Return detail without ever opening a browser for an API request."""
         selected_account_id = xhs_account_id(account_id)
-        if xsec_token:
-            token, source = xsec_token, xsec_source or "pc_user"
-        else:
-            cached = files.xhs_note_token(selected_account_id, note_id)
-            if cached is None:
+
+        async def load_note() -> dict[str, Any]:
+            cached = None if xsec_token else files.xhs_note_token(selected_account_id, note_id)
+            if xsec_token:
+                token, source = xsec_token, xsec_source or "pc_user"
+            elif cached is None:
                 fields = await logins.resolve_xhs_identifier_silently(
                     "note", note_id, selected_account_id
                 )
                 token, source = fields["xsec_token"], fields["xsec_source"]
             else:
                 token, source = cached
-        return await xhs_call(
-            selected_account_id, xhs_client.note_detail, note_id,
-            xsec_token=token, xsec_source=source,
+            try:
+                return await xhs_call(
+                    selected_account_id, xhs_client.note_detail, note_id,
+                    xsec_token=token, xsec_source=source,
+                )
+            except HTTPException as exc:
+                # A cached token can expire independently of the Cookie. Drop
+                # it and resolve once more; never loop or replace caller input.
+                if xsec_token or cached is None or exc.status_code != 422:
+                    raise
+                await files.delete_xhs_note_token(selected_account_id, note_id)
+                fields = await logins.resolve_xhs_identifier_silently(
+                    "note", note_id, selected_account_id
+                )
+                return await xhs_call(
+                    selected_account_id, xhs_client.note_detail, note_id,
+                    xsec_token=fields["xsec_token"], xsec_source=fields["xsec_source"],
+                )
+
+        return await xhs_read_cache.get_or_load(
+            f"note:{selected_account_id}:{note_id}",
+            ttl_seconds=xhs_read_cache.notes_ttl_seconds,
+            loader=load_note,
         )
 
     @app.get(
