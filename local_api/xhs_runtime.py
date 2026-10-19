@@ -33,6 +33,18 @@ class XhsRuntimeUnavailable(RuntimeError):
     """Raised when the signed-request runtime was not prepared for this build."""
 
 
+class XhsRiskControlError(RuntimeError):
+    """The platform asked this session to slow down or complete verification."""
+
+    def __init__(self, status_code: int, platform_code: int | str | None = None) -> None:
+        self.status_code = status_code
+        self.platform_code = platform_code
+        detail = f"HTTP {status_code}"
+        if platform_code is not None:
+            detail += f", code {platform_code}"
+        super().__init__(f"Xiaohongshu risk control response: {detail}")
+
+
 class XhsClient:
     """Synchronous signed XHS client; API handlers run it in a worker thread."""
 
@@ -104,6 +116,11 @@ class XhsClient:
                 method, f"{XHS_ORIGIN}{api}", headers=headers, cookies=cookies,
                 data=body or None, timeout=20,
             )
+            # 461/471 are verification/risk-control responses rather than
+            # transient transport failures. Do not parse/retry them here: the
+            # API layer applies a shared cooldown before accepting more work.
+            if response.status_code in (429, 461, 471):
+                raise XhsRiskControlError(response.status_code)
             payload = response.json()
         except requests.RequestException as exc:
             raise RuntimeError(f"Could not reach Xiaohongshu: {exc}") from exc
@@ -119,6 +136,10 @@ class XhsClient:
     def _reject_if_failed(payload: dict[str, Any]) -> None:
         if payload.get("success") is not True:
             code = payload.get("code")
+            # These documented-in-the-wild payload codes accompany risk and
+            # verification pages even when the HTTP layer itself is 200.
+            if str(code) in {"300012", "300031"}:
+                raise XhsRiskControlError(200, code)
             message = payload.get("msg") or "Xiaohongshu rejected the request"
             raise RuntimeError(f"Xiaohongshu error {code}: {message}")
 

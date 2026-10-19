@@ -34,7 +34,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field, field_validator
 
-from local_api.xhs_runtime import XhsClient, XhsRuntimeUnavailable
+from local_api.xhs_runtime import XhsClient, XhsRiskControlError, XhsRuntimeUnavailable
 from local_api.dashboard import DASHBOARD_HTML
 
 # These two modules are from the checked-out upstream project.  They are pure
@@ -218,6 +218,87 @@ class RequestAuditLog:
                         if len(records) >= limit:
                             break
             return records
+
+
+class XhsRequestCoolingDown(RuntimeError):
+    """Raised locally when the shared XHS gate is intentionally paused."""
+
+    def __init__(self, retry_after_seconds: int, *, upstream_status: int | None = None) -> None:
+        self.retry_after_seconds = retry_after_seconds
+        self.upstream_status = upstream_status
+        super().__init__(f"Xiaohongshu requests are cooling down; retry after {retry_after_seconds}s")
+
+
+class XhsRequestGate:
+    """Serialize XHS API traffic and back off safely on risk-control replies.
+
+    The rate limit is deliberately service-wide: platform risk decisions can
+    apply to the shared network address as well as an individual login. This
+    gate does not alter fingerprints or retry verification challenges.
+    """
+
+    def __init__(self) -> None:
+        self.min_interval_seconds = self._seconds_from_env(
+            "XHS_MIN_REQUEST_INTERVAL_SECONDS", default=8.0, minimum=1.0, maximum=120.0
+        )
+        self.base_cooldown_seconds = self._seconds_from_env(
+            "XHS_RISK_COOLDOWN_SECONDS", default=300.0, minimum=30.0, maximum=3600.0
+        )
+        self.max_cooldown_seconds = 3600.0
+        self._lock = asyncio.Lock()
+        self._last_started = 0.0
+        self._cooldown_until = 0.0
+        self._risk_streak = 0
+
+    @staticmethod
+    def _seconds_from_env(name: str, *, default: float, minimum: float, maximum: float) -> float:
+        try:
+            value = float(os.getenv(name, str(default)))
+        except ValueError:
+            return default
+        return min(max(value, minimum), maximum)
+
+    @staticmethod
+    def _remaining_seconds(until: float) -> int:
+        return max(1, int(until - time.monotonic() + 0.999))
+
+    async def run(self, operation: Callable[[], Awaitable[Any]]) -> Any:
+        """Run exactly one signed request after the global pace/cooldown check."""
+        async with self._lock:
+            if self._cooldown_until > time.monotonic():
+                raise XhsRequestCoolingDown(self._remaining_seconds(self._cooldown_until))
+
+            interval_remaining = self.min_interval_seconds - (time.monotonic() - self._last_started)
+            if interval_remaining > 0:
+                await asyncio.sleep(interval_remaining)
+            self._last_started = time.monotonic()
+
+            try:
+                result = await operation()
+            except XhsRiskControlError as exc:
+                self._risk_streak = min(self._risk_streak + 1, 4)
+                cooldown = min(
+                    self.base_cooldown_seconds * (3 ** (self._risk_streak - 1)),
+                    self.max_cooldown_seconds,
+                )
+                self._cooldown_until = time.monotonic() + cooldown
+                raise XhsRequestCoolingDown(
+                    int(cooldown), upstream_status=exc.status_code
+                ) from exc
+            else:
+                # A successful request gradually returns the session to its
+                # base risk level instead of instantly allowing a burst.
+                self._risk_streak = max(0, self._risk_streak - 1)
+                return result
+
+    def status(self) -> dict[str, int | float]:
+        """Return display-safe pacing state for the local management panel."""
+        remaining = max(0, int(self._cooldown_until - time.monotonic() + 0.999))
+        return {
+            "min_interval_seconds": self.min_interval_seconds,
+            "cooldown_remaining_seconds": remaining,
+            "risk_streak": self._risk_streak,
+        }
 
 
 class RuntimeFiles:
@@ -729,7 +810,10 @@ class BrowserLoginManager:
                         # scanned a QR code.  Never promote that to active: only
                         # the signed current-user endpoint proves authentication.
                         candidate = all(cookie_map.get(name) for name in session_names)
-                        if candidate and _ % 5 == 0:
+                        # The signed self-info probe is only a login
+                        # confirmation. Polling it every five seconds can
+                        # itself trigger XHS 461, so keep this conservative.
+                        if candidate and _ % 15 == 0:
                             cookie = "; ".join(f"{name}={value}" for name, value in cookie_map.items())
                             try:
                                 await asyncio.to_thread(xhs_session_checker.check_session, cookie)
@@ -998,6 +1082,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     request_audit = RequestAuditLog(files.data_dir)
     client = DouyinClient(files)
     xhs_client = XhsClient()
+    xhs_request_gate = XhsRequestGate()
     logins = BrowserLoginManager(files)
     app = FastAPI(
         title="Douyin Local API",
@@ -1007,6 +1092,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     app.state.files = files
     app.state.logins = logins
     app.state.xhs_client = xhs_client
+    app.state.xhs_request_gate = xhs_request_gate
     app.state.request_audit = request_audit
     app.state.started_at = datetime.now(timezone.utc)
     app.state.started_monotonic = time.monotonic()
@@ -1170,6 +1256,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
                 "started_at": app.state.started_at.isoformat(),
                 "uptime_seconds": round(time.monotonic() - app.state.started_monotonic),
                 "check_interval_seconds": app.state.account_check_interval,
+                "xhs_request_pacing": xhs_request_gate.status(),
                 "listen_address": f"http://{app.state.listen_host}:{app.state.listen_port}",
                 "intranet_addresses": _intranet_addresses(app.state.listen_port, app.state.listen_host),
                 "data_dir": str(files.data_dir),
@@ -1248,8 +1335,23 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         return cookie
 
     async def xhs_call(account_id: str | None, operation: Any, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        selected_account_id = xhs_account_id(account_id)
         try:
-            result = await asyncio.to_thread(operation, *args, xhs_cookie(account_id), **kwargs)
+            result = await xhs_request_gate.run(
+                lambda: asyncio.to_thread(
+                    operation, *args, xhs_cookie(selected_account_id), **kwargs
+                )
+            )
+        except XhsRequestCoolingDown as exc:
+            upstream = f"（上游 HTTP {exc.upstream_status}）" if exc.upstream_status else ""
+            raise HTTPException(
+                status_code=429,
+                detail=(
+                    f"小红书触发访问保护{upstream}；已暂停此服务的小红书请求，请在 "
+                    f"{exc.retry_after_seconds} 秒后重试。请勿并发或立即重试。"
+                ),
+                headers={"Retry-After": str(exc.retry_after_seconds)},
+            ) from exc
         except XhsRuntimeUnavailable as exc:
             raise HTTPException(status_code=503, detail=str(exc)) from exc
         except (RuntimeError, ValueError) as exc:
