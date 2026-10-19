@@ -18,7 +18,7 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import messagebox, ttk
 
 
 class NativeDashboard(ttk.Frame):
@@ -106,6 +106,7 @@ class NativeDashboard(ttk.Frame):
         ttk.Button(account_actions, text="检查选中账号", command=self.check_selected).pack(side="left", padx=7)
         ttk.Button(account_actions, text="检查全部有效账号", command=self.check_all).pack(side="left")
         ttk.Button(account_actions, text="重新登录选中账号", command=self.relogin_selected).pack(side="left", padx=7)
+        ttk.Button(account_actions, text="删除选中账号", command=self.delete_selected).pack(side="left")
 
         login = ttk.LabelFrame(self, text="新增登录账号", padding=10)
         login.pack(fill="x")
@@ -267,6 +268,25 @@ class NativeDashboard(ttk.Frame):
         self._run_async(
             lambda: self._request("POST", "/api/v1/accounts/check-all"),
             lambda result: (self.status_text.set(f"已检查 {result.get('checked', 0)} 个有效账号。"), self.refresh()),
+        )
+
+    def delete_selected(self) -> None:
+        account = self._selected_account()
+        if not account:
+            return
+        name = account.get("nickname") or account.get("label") or "此账号"
+        if not messagebox.askyesno(
+            "永久删除账号",
+            f"确认永久删除“{name}”吗？\n\nCookie、隔离浏览器配置和小红书临时令牌都会删除，无法恢复。",
+            icon="warning",
+            parent=self.root,
+        ):
+            return
+        account_id = str(account["account_id"])
+        self.status_text.set("正在删除账号及本地登录数据…")
+        self._run_async(
+            lambda: self._request("DELETE", f"/api/v1/accounts/{account_id}"),
+            lambda _result: (self.status_text.set("账号已删除。"), self.refresh()),
         )
 
     def login(self) -> None:

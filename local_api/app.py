@@ -13,6 +13,7 @@ import ipaddress
 import json
 import os
 import secrets
+import shutil
 import socket
 import sys
 import tempfile
@@ -357,6 +358,39 @@ class RuntimeFiles:
         account = await self.create_account(label, platform=platform)
         return (await self.save_cookie(account["account_id"], cookie, platform=platform)) or account
 
+    def _profile_dir_for_account(self, account_id: str) -> Path | None:
+        """Resolve a profile path without allowing an account ID to escape its root."""
+        root = self.browser_profiles_dir.resolve()
+        candidate = (root / account_id).resolve()
+        try:
+            candidate.relative_to(root)
+        except ValueError:
+            return None
+        return candidate
+
+    async def delete_account(self, account_id: str) -> dict[str, Any] | None:
+        """Permanently remove one account, its Cookie profile, and XHS token cache."""
+        async with self._write_lock:
+            accounts = self._load_accounts()
+            account = next((item for item in accounts if item.get("account_id") == account_id), None)
+            if account is None:
+                return None
+
+            profile_dir = self._profile_dir_for_account(account_id)
+            if profile_dir is not None and profile_dir.exists():
+                # A caller cancels any active login task before this operation,
+                # so the Chromium profile should no longer be locked on Windows.
+                await asyncio.to_thread(shutil.rmtree, profile_dir)
+
+            entries = self._load_xhs_note_tokens()
+            retained_entries = {
+                key: value for key, value in entries.items()
+                if not key.startswith(f"{account_id}:")
+            }
+            self._atomic_json_write(self.xhs_note_tokens_path, {"tokens": retained_entries})
+            self._save_accounts([item for item in accounts if item.get("account_id") != account_id])
+            return self._public_account(account)
+
 
 def default_data_dir() -> Path:
     configured = os.getenv("DOUYIN_LOCAL_API_DATA")
@@ -512,6 +546,15 @@ class BrowserLoginManager:
         # candidates; the self-info probe below decides whether login succeeded.
         "xhs": ("https://www.xiaohongshu.com/", ("a1", "web_session")),
     }
+
+    async def cancel(self, account_id: str) -> None:
+        """Close a pending login browser before removing its account files."""
+        task = self._tasks.get(account_id)
+        if task is None or task.done():
+            return
+        task.cancel()
+        with suppress(asyncio.CancelledError):
+            await task
 
     @staticmethod
     def _browser_launch_options() -> dict[str, str]:
@@ -884,7 +927,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         CORSMiddleware,
         allow_origins=origins,
         allow_credentials=False,
-        allow_methods=["GET", "POST"],
+        allow_methods=["GET", "POST", "DELETE"],
         allow_headers=["Content-Type"],
     )
     async def check_account(account_id: str) -> dict[str, Any]:
@@ -1017,6 +1060,15 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     async def account_check(account_id: str) -> dict[str, Any]:
         """Immediately verify an account and update its visible login state."""
         return {"account": await check_account(account_id)}
+
+    @app.delete("/api/v1/accounts/{account_id}", tags=["accounts"])
+    async def delete_account(account_id: str) -> dict[str, Any]:
+        """Permanently remove a saved account and its local login artefacts."""
+        await logins.cancel(account_id)
+        account = await files.delete_account(account_id)
+        if account is None:
+            raise HTTPException(status_code=404, detail="Account not found")
+        return {"message": "Account and its local login data were deleted", "account": account}
 
     @app.post("/api/v1/accounts/check-all", tags=["accounts"])
     async def check_all_accounts() -> dict[str, Any]:
