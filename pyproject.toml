@@ -7,22 +7,22 @@ license = { text = "Apache-2.0" }
 authors = [{ name = "Evil0ctal" }]
 
 dependencies = [
-    "fastapi>=0.115",
+    "fastapi>=0.143.2",
     "uvicorn[standard]>=0.54.0",
-    "pydantic>=2.9",
-    "pydantic-settings>=2.6",
+    "pydantic>=2.14.1",
+    "pydantic-settings>=2.16.0",
     "sqlalchemy[asyncio]>=2.1.1",
-    "asyncpg>=0.30",
+    "asyncpg>=0.32.0",
     "alembic>=1.20.0",
     "redis[hiredis]>=8.1.0",
-    "wreq>=0.12.3,<1.0",
+    "wreq>=0.13.0,<1.0",
     "httpx>=0.28",
     "structlog>=24.4",
-    "cryptography>=43.0",
+    "cryptography>=50.0.2",
     "argon2-cffi>=23.1",
-    "typer>=0.12",
+    "typer>=0.27.3",
     "rich>=13.7",
-    "mcp>=2.2.0",
+    "mcp>=2.3.0",
     "python-multipart>=0.0.20",
 ]
 
@@ -31,8 +31,8 @@ dev = [
     "pytest>=8.3",
     "pytest-asyncio>=0.25",
     "pytest-cov>=6.0",
-    "ruff>=0.16.9",
-    "mypy>=1.14",
+    "ruff>=0.17.1",
+    "mypy>=2.4.0",
     "types-redis",
 ]
 
