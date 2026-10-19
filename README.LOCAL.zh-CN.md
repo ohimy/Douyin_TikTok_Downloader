@@ -7,6 +7,7 @@
 - `POST /api/v1/cookies`：实时替换 Cookie，下一次请求立即使用新 Cookie。
 - `POST /api/v1/accounts/login`：打开本机隔离浏览器窗口，扫码或手动登录一个抖音账号并自动保存会话；
 - `GET /dashboard`：本地管理面板，集中显示服务、账号、检查结果与重登入口；`GET /api/v1/dashboard` 可供内网监控读取脱敏状态。
+- `GET /api/v1/logs/requests`：查看最近的本地 API 请求元数据；Web 管理面板也提供最近请求视图。
 - `GET /api/v1/accounts`：查看登录账号、失效和检查状态；`POST /api/v1/accounts/{account_id}/relogin` 可重新登录；`DELETE /api/v1/accounts/{account_id}` 可永久删除账号及其本地登录数据。
 - `GET /api/v1/xhs/users/{user_id}/posts`：获取小红书博主主页作品列表；
 - `GET /api/v1/xhs/notes/{note_id}`：按小红书笔记 ID 获取种草详情。
@@ -32,6 +33,16 @@ Windows 机器需要安装 Google Chrome 或 Microsoft Edge。Windows exe 启动
 在面板选择抖音或小红书，输入账号备注并点击登录，程序会打开独立的浏览器配置目录。请在该窗口完成扫码或密码登录；小红书会额外验证“当前用户”接口，访客 Cookie 不会被误判为登录成功。验证成功后窗口自动关闭，账号会在列表中显示为 `active`。Cookie 不会显示在页面或接口响应中。优先使用 Chrome，未安装时自动尝试 Windows Edge；浏览器位于非标准目录时，可设置 `DOUYIN_LOCAL_API_BROWSER_PATH=C:\\Path\\To\\browser.exe`。
 
 服务每 15 分钟检查已激活账号；你也可以在列表点击“检查”。确定失效的账号会显示 `needs_login`，点击“重新登录”即可打开该账号的新登录窗口。校验成功后，列表与 `GET /api/v1/accounts` 会显示所属账号的头像和昵称。两个平台的 Cookie 与浏览器配置彼此隔离；每个作品接口都可提交 `account_id` 指定使用某个登录账号，未指定时使用该平台最近更新的有效账号。删除账号需在面板确认，随后会永久清除该账号的 Cookie、隔离浏览器配置和小红书临时令牌缓存。
+
+## 请求日志
+
+服务会将业务 API 的请求元数据写入 `data/logs/requests.jsonl`，并在 Web 管理面板的“最近请求”区域展示。每条记录只含 UTC 时间、请求 ID、客户端 IP、HTTP 方法、**路由模板**、状态码与耗时。Cookie、请求头、请求体、查询参数、账号 ID、作品 ID 和 `xsec_token` 都不会写入日志；仪表盘轮询、健康检查和日志读取接口也不会污染业务日志。
+
+当前日志文件达到 5 MiB 时自动轮转，保留当前文件及最多 5 个历史文件。可从受信任内网调用：
+
+```bash
+curl "http://127.0.0.1:8787/api/v1/logs/requests?limit=50"
+```
 
 ## Windows 生成 exe
 
@@ -90,5 +101,6 @@ curl "http://127.0.0.1:8787/api/v1/xhs/notes/NOTE_ID"
 
 - 所有业务接口均无需鉴权，因此只将端口放行给可信内网。任何能访问服务的人都能发起浏览器登录、使用或替换会话。
 - Cookie 具有账号权限。不要把 `data/` 目录共享、提交到 Git 或放进网盘。
+- 请求日志含内网客户端 IP 和调用时间，也应作为运行数据妥善保管；它不含 Cookie 或平台令牌。
 - 服务热更新 Cookie 是原子写入的；并发请求只会使用旧 Cookie 或完整的新 Cookie，不会读到半截内容。
 - 平台的风控、登录态过期和接口变更仍可能导致 `502`。遇到此情况先使用已登录浏览器重新导出 Cookie，再调用更新接口。

@@ -17,8 +17,10 @@ import shutil
 import socket
 import sys
 import tempfile
+import threading
 import time
 import types
+from collections import deque
 from collections.abc import Awaitable, Callable, Mapping
 from contextlib import suppress
 from datetime import datetime, timezone
@@ -27,7 +29,7 @@ from typing import Any, Literal
 from urllib.parse import parse_qs, quote, urlparse
 
 import httpx
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field, field_validator
@@ -142,6 +144,80 @@ class XhsLinkResolve(BaseModel):
         if parsed.scheme not in ("http", "https") or not allowed:
             raise ValueError("url must be a Xiaohongshu note, profile, or share link")
         return value
+
+
+class RequestAuditLog:
+    """Small, privacy-preserving request audit log for the local API.
+
+    The JSONL file deliberately contains only request metadata. In particular,
+    it never receives headers, request bodies, query strings, Cookies, or
+    platform tokens. Keeping it file based makes it useful in the Windows EXE
+    without adding a database dependency.
+    """
+
+    max_bytes = 5 * 1024 * 1024
+    backup_count = 5
+    _fields = (
+        "timestamp",
+        "request_id",
+        "client_ip",
+        "method",
+        "path",
+        "status_code",
+        "duration_ms",
+    )
+
+    def __init__(self, data_dir: Path) -> None:
+        self.log_dir = data_dir / "logs"
+        self.path = self.log_dir / "requests.jsonl"
+        self._lock = threading.Lock()
+        self.log_dir.mkdir(parents=True, exist_ok=True)
+
+    def _rotate_locked(self) -> None:
+        for index in range(self.backup_count - 1, 0, -1):
+            source = self.path.with_name(f"{self.path.name}.{index}")
+            if source.exists():
+                os.replace(source, self.path.with_name(f"{self.path.name}.{index + 1}"))
+        if self.path.exists():
+            os.replace(self.path, self.path.with_name(f"{self.path.name}.1"))
+
+    def record(self, entry: Mapping[str, Any]) -> None:
+        """Append one metadata-only entry and rotate bounded local files."""
+        safe_entry = {field: entry.get(field) for field in self._fields}
+        encoded = json.dumps(safe_entry, ensure_ascii=False, separators=(",", ":"))
+        with self._lock:
+            try:
+                if self.path.exists() and self.path.stat().st_size + len(encoded.encode("utf-8")) + 1 > self.max_bytes:
+                    self._rotate_locked()
+                with self.path.open("a", encoding="utf-8") as log_file:
+                    log_file.write(encoded + "\n")
+            except OSError:
+                # Observability must never make the business API unavailable,
+                # e.g. when a user temporarily has no free disk space.
+                return
+
+    def recent(self, limit: int) -> list[dict[str, Any]]:
+        """Return newest metadata-only entries, including rotated files if needed."""
+        with self._lock:
+            records: list[dict[str, Any]] = []
+            paths = [self.path, *(self.path.with_name(f"{self.path.name}.{index}") for index in range(1, self.backup_count + 1))]
+            for path in paths:
+                if len(records) >= limit:
+                    break
+                try:
+                    lines = deque(path.open("r", encoding="utf-8"), maxlen=limit - len(records))
+                except OSError:
+                    continue
+                for line in reversed(lines):
+                    try:
+                        parsed = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    if isinstance(parsed, Mapping):
+                        records.append({field: parsed.get(field) for field in self._fields})
+                        if len(records) >= limit:
+                            break
+            return records
 
 
 class RuntimeFiles:
@@ -919,6 +995,7 @@ def _account_display_fields(payload: Mapping[str, Any]) -> tuple[str | None, str
 
 def create_app(data_dir: Path | None = None) -> FastAPI:
     files = RuntimeFiles(data_dir or default_data_dir())
+    request_audit = RequestAuditLog(files.data_dir)
     client = DouyinClient(files)
     xhs_client = XhsClient()
     logins = BrowserLoginManager(files)
@@ -930,6 +1007,7 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     app.state.files = files
     app.state.logins = logins
     app.state.xhs_client = xhs_client
+    app.state.request_audit = request_audit
     app.state.started_at = datetime.now(timezone.utc)
     app.state.started_monotonic = time.monotonic()
     app.state.account_check_interval = max(int(os.getenv("DOUYIN_ACCOUNT_CHECK_SECONDS", "900")), 60)
@@ -943,6 +1021,53 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
         allow_methods=["GET", "POST", "DELETE"],
         allow_headers=["Content-Type"],
     )
+
+    # The management page polls its own state every 15 seconds. Excluding that
+    # UI noise keeps the audit log focused on API calls made by users/clients.
+    audit_excluded_paths = {
+        "/",
+        "/dashboard",
+        "/accounts",
+        "/docs",
+        "/openapi.json",
+        "/redoc",
+        "/health",
+        "/api/v1/dashboard",
+        "/api/v1/logs/requests",
+    }
+
+    def audit_path(request: Request) -> str:
+        route = request.scope.get("route")
+        template = getattr(route, "path", None)
+        # Route templates preserve useful IDs structurally without persisting
+        # the caller-provided path values. Unknown paths stay anonymous too.
+        return template if isinstance(template, str) else "<unmatched>"
+
+    @app.middleware("http")
+    async def audit_request(request: Request, call_next: Callable[[Request], Awaitable[Any]]) -> Any:
+        started = time.perf_counter()
+        request_id = secrets.token_hex(8)
+        response = None
+        try:
+            response = await call_next(request)
+            response.headers["X-Request-ID"] = request_id
+            return response
+        finally:
+            request_path = request.url.path
+            if request_path not in audit_excluded_paths:
+                client_host = request.client.host if request.client else "unknown"
+                request_audit.record(
+                    {
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "request_id": request_id,
+                        "client_ip": str(client_host)[:64],
+                        "method": request.method,
+                        "path": audit_path(request),
+                        "status_code": response.status_code if response is not None else 500,
+                        "duration_ms": round((time.perf_counter() - started) * 1000, 2),
+                    }
+                )
+
     async def check_account(account_id: str) -> dict[str, Any]:
         account = files.account(account_id)
         if account is None:
@@ -1020,6 +1145,17 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
                 "needs_login": sum(account["status"] == "needs_login" for account in accounts),
                 "douyin": len([account for account in accounts if account["platform"] == "douyin"]),
                 "xhs": len([account for account in accounts if account["platform"] == "xhs"]),
+            },
+        }
+
+    @app.get("/api/v1/logs/requests", tags=["system"])
+    async def request_logs(limit: int = Query(default=50, ge=1, le=200)) -> dict[str, Any]:
+        """Return recent local request metadata without credentials or payloads."""
+        return {
+            "items": request_audit.recent(limit),
+            "retention": {
+                "current_file_max_bytes": request_audit.max_bytes,
+                "backup_files": request_audit.backup_count,
             },
         }
 
