@@ -18,6 +18,8 @@ from urllib.parse import urlencode
 import execjs
 import requests
 
+from local_api.request_trace import mark_transport
+
 XHS_ORIGIN = "https://edith.xiaohongshu.com"
 _RUNTIME_DIRNAME = "xhs_assets"
 
@@ -122,6 +124,7 @@ class XhsClient:
         )
 
     def _request(self, method: str, api: str, cookie_header: str, data: dict[str, Any] | str = "") -> dict[str, Any]:
+        mark_transport("http")
         cookies = self._cookie_map(cookie_header)
         headers, body = self._headers(cookies, api, data, method, self._ensure_signer())
         try:

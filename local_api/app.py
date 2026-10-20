@@ -46,6 +46,7 @@ from local_api.xhs_runtime import (
 from local_api.xhs_browser import XhsBrowserReader, XhsBrowserUnavailable, XhsVerificationRequired
 from local_api.xhs_reader import XhsAutoReader
 from local_api.dashboard import DASHBOARD_HTML
+from local_api.request_trace import RequestExecution, mark_cache_source, mark_transport, request_execution
 
 # These two modules are from the checked-out upstream project.  They are pure
 # Python and do not pull in the upstream database/queue application.
@@ -175,6 +176,9 @@ class RequestAuditLog:
         "url",
         "status_code",
         "duration_ms",
+        "transport",
+        "transport_attempts",
+        "cache_status",
     )
 
     def __init__(self, data_dir: Path) -> None:
@@ -366,8 +370,8 @@ class XhsReadCache:
     def __init__(self) -> None:
         self.posts_ttl_seconds = self._seconds_from_env("XHS_POSTS_CACHE_SECONDS", 120.0)
         self.notes_ttl_seconds = self._seconds_from_env("XHS_NOTE_CACHE_SECONDS", 600.0)
-        self._entries: dict[str, tuple[float, dict[str, Any]]] = {}
-        self._inflight: dict[str, asyncio.Task[dict[str, Any]]] = {}
+        self._entries: dict[str, tuple[float, dict[str, Any], tuple[str, ...]]] = {}
+        self._inflight: dict[str, tuple[asyncio.Task[dict[str, Any]], RequestExecution]] = {}
         self._lock = asyncio.Lock()
 
     @staticmethod
@@ -382,45 +386,58 @@ class XhsReadCache:
     ) -> dict[str, Any]:
         now = time.monotonic()
         async with self._lock:
-            for expired_key, (expires_at, _) in list(self._entries.items()):
+            for expired_key, (expires_at, _, _) in list(self._entries.items()):
                 if expires_at <= now:
                     self._entries.pop(expired_key, None)
             cached = self._entries.get(key)
             if cached and cached[0] > now:
+                mark_cache_source(cached[2], "hit")
                 return copy.deepcopy(cached[1])
-            task = self._inflight.get(key)
-            if task is None:
-                task = asyncio.create_task(self._load(key, ttl_seconds, loader))
+            flight = self._inflight.get(key)
+            owner = flight is None
+            if flight is None:
+                execution = RequestExecution()
+                task = asyncio.create_task(self._load(key, ttl_seconds, loader, execution))
                 task.add_done_callback(lambda done: None if done.cancelled() else done.exception())
-                self._inflight[key] = task
+                flight = (task, execution)
+                self._inflight[key] = flight
+            task, execution = flight
         # A disconnected caller must not cancel a browser operation shared by
         # another caller. The cache owns the task and its lifecycle.
-        return copy.deepcopy(await asyncio.shield(task))
+        try:
+            return copy.deepcopy(await asyncio.shield(task))
+        finally:
+            # Each waiter gets its own source metadata, including on failure.
+            # Never infer this from the most recent account-wide transport.
+            mark_cache_source(tuple(execution.transports), "miss" if owner else "shared")
 
     async def _load(
-        self, key: str, ttl_seconds: float, loader: Callable[[], Awaitable[dict[str, Any]]]
+        self, key: str, ttl_seconds: float, loader: Callable[[], Awaitable[dict[str, Any]]],
+        execution: RequestExecution,
     ) -> dict[str, Any]:
+        token = request_execution.set(execution)
         try:
             result = await loader()
             async with self._lock:
                 if ttl_seconds > 0:
-                    self._entries[key] = (time.monotonic() + ttl_seconds, copy.deepcopy(result))
+                    self._entries[key] = (time.monotonic() + ttl_seconds, copy.deepcopy(result), tuple(execution.transports))
                     while len(self._entries) > 256:
                         self._entries.pop(next(iter(self._entries)))
             return result
         finally:
+            request_execution.reset(token)
             async with self._lock:
                 self._inflight.pop(key, None)
 
     async def close(self) -> None:
-        tasks = list(self._inflight.values())
+        tasks = [task for task, _ in self._inflight.values()]
         for task in tasks:
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
 
     def status(self) -> dict[str, int | float]:
         now = time.monotonic()
-        valid_entries = sum(expires_at > now for expires_at, _ in self._entries.values())
+        valid_entries = sum(expires_at > now for expires_at, _, _ in self._entries.values())
         return {
             "posts_ttl_seconds": self.posts_ttl_seconds,
             "notes_ttl_seconds": self.notes_ttl_seconds,
@@ -791,6 +808,7 @@ class DouyinClient:
         cookie = self.files.read_cookie(account_id)
         if not cookie:
             raise HTTPException(status_code=409, detail="No active Douyin account is available")
+        mark_transport("http")
         query, signature_headers = self._signed_query(params, cookie)
         headers = {
             "User-Agent": USER_AGENT,
@@ -907,6 +925,7 @@ class BrowserLoginManager:
             raise HTTPException(status_code=409, detail="This account already has a login window open")
         if self.before_profile_use is not None:
             await self.before_profile_use(account_id)
+        mark_transport("browser")
         self._tasks[account_id] = asyncio.create_task(self._run(account_id, platform))
         return {
             "account_id": account_id,
@@ -1014,6 +1033,7 @@ class BrowserLoginManager:
                 detail="This account has no local browser profile. Please log in through /accounts first.",
             )
         context = None
+        mark_transport("browser")
         try:
             try:
                 from playwright.async_api import async_playwright
@@ -1287,29 +1307,35 @@ def create_app(data_dir: Path | None = None) -> FastAPI:
     async def audit_request(request: Request, call_next: Callable[[Request], Awaitable[Any]]) -> Any:
         started = time.perf_counter()
         request_id = secrets.token_hex(8)
+        execution = RequestExecution()
+        execution_token = request_execution.set(execution)
         response = None
         try:
             response = await call_next(request)
             response.headers["X-Request-ID"] = request_id
             return response
         finally:
-            request_path = request.url.path
-            if request_path not in audit_excluded_paths:
-                client_host = request.client.host if request.client else "unknown"
-                request_audit.record(
-                    {
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
-                        "request_id": request_id,
-                        "client_ip": str(client_host)[:64],
-                        "method": request.method,
-                        "path": request_path,
-                        # Keep actual path IDs and the address used by this
-                        # caller, while omitting query parameters and tokens.
-                        "url": str(request.url.replace(query="", fragment="")),
-                        "status_code": response.status_code if response is not None else 500,
-                        "duration_ms": round((time.perf_counter() - started) * 1000, 2),
-                    }
-                )
+            try:
+                request_path = request.url.path
+                if request_path not in audit_excluded_paths:
+                    client_host = request.client.host if request.client else "unknown"
+                    request_audit.record(
+                        {
+                            "timestamp": datetime.now(timezone.utc).isoformat(),
+                            "request_id": request_id,
+                            "client_ip": str(client_host)[:64],
+                            "method": request.method,
+                            "path": request_path,
+                            # Keep actual path IDs and the address used by this
+                            # caller, while omitting query parameters and tokens.
+                            "url": str(request.url.replace(query="", fragment="")),
+                            "status_code": response.status_code if response is not None else 500,
+                            "duration_ms": round((time.perf_counter() - started) * 1000, 2),
+                            **execution.metadata(),
+                        }
+                    )
+            finally:
+                request_execution.reset(execution_token)
 
     async def check_account(account_id: str) -> dict[str, Any]:
         account = files.account(account_id)

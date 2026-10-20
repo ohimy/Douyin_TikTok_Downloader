@@ -6,6 +6,7 @@ import time
 from collections.abc import Awaitable, Callable
 from typing import Any
 
+from local_api.request_trace import mark_transport
 from local_api.xhs_runtime import XhsRiskControlError, XhsSessionExpiredError
 
 
@@ -59,8 +60,15 @@ class XhsAutoReader:
             order = order[:1]
         for index, (transport, loader) in enumerate(order):
             self._last[key] = transport
+
+            async def traced_load() -> dict[str, Any]:
+                # Only record an attempt once the shared gate actually lets
+                # it run. A cooldown rejection must not look like a request.
+                mark_transport(transport)
+                return await loader()
+
             try:
-                return await self.runner(loader)
+                return await self.runner(traced_load)
             except XhsSessionExpiredError:
                 raise
             except Exception as exc:
