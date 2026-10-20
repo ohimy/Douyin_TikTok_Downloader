@@ -3,6 +3,10 @@
 Only the signed public-read operations needed by this application are kept:
 one page of a creator's published notes, one note detail record, and a session
 health probe.  Cookies continue to be owned by ``RuntimeFiles`` in app.py.
+
+Local adaptation modified 2026-10-20; see MODIFICATIONS.md. Adapted portions
+retain Copyright (c) 2026 Nirvana919 and the MIT terms reproduced in
+local_api/xhs_assets/THIRD_PARTY_NOTICES.md.
 """
 
 from __future__ import annotations

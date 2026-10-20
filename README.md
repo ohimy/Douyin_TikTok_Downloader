@@ -1,3 +1,11 @@
+> **Local API fork / modification notice:** This repository derives from
+> [Evil0ctal/Douyin_TikTok_Download_API](https://github.com/Evil0ctal/Douyin_TikTok_Download_API),
+> copyright 2021-2026 Evil0ctal and contributors, under [Apache-2.0](LICENSE).
+> This fork adds a standalone Douyin/Xiaohongshu intranet API and Windows desktop
+> application. See [local application instructions](README.LOCAL.zh-CN.md),
+> [modifications](MODIFICATIONS.md), [NOTICE](NOTICE), and
+> [third-party notices](THIRD_PARTY_NOTICES.md). Upstream documentation follows.
+
 <div align="center">
 <a href="https://douyin.wtf/" alt="logo"><img src="./logo/logo.svg" width="120" alt="Douyin_TikTok_Download_API"/></a>
 </div>

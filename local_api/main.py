@@ -1,4 +1,8 @@
-"""Console entrypoint used in development and by the packaged executable."""
+"""Console entrypoint used in development and by the packaged executable.
+
+Local API fork addition; modification notice dated 2026-10-20.
+See LICENSE, NOTICE, and MODIFICATIONS.md for attribution and local changes.
+"""
 
 from __future__ import annotations
 

@@ -8,6 +8,11 @@ read operations exposed by its Xiaohongshu API.
 
 Source: https://github.com/Nirvana919/XHS_Crawler
 
+Original license (retained verbatim below):
+https://github.com/Nirvana919/XHS_Crawler/blob/d96edb9584330622931064781db00c3f96fa2abe/LICENSE
+
+Local integration changes: see `MODIFICATIONS.md` at the repository root.
+
 ```
 MIT License
 

@@ -1,5 +1,8 @@
 """Self-contained local management dashboard.
 
+Local API fork addition; modification notice dated 2026-10-20.
+See LICENSE, NOTICE, and MODIFICATIONS.md for attribution and local changes.
+
 Keeping the page in a Python module means PyInstaller includes it without a
 separate static-file collection rule. It intentionally depends on no CDN or
 third-party browser script, so it keeps working on an isolated intranet.

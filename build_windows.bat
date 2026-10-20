@@ -3,6 +3,9 @@ setlocal EnableExtensions EnableDelayedExpansion
 
 rem Build the Windows desktop executable. Missing prerequisites are installed
 rem through winget so a clean Windows workstation can build this project.
+rem Local API fork modification (2026-10-20): standalone desktop packaging
+rem and license collection. See LICENSE, NOTICE, and MODIFICATIONS.md.
+cd /d "%~dp0" || goto :failed
 
 call :find_python
 if not defined PYTHON_EXE (
@@ -52,12 +55,19 @@ set "VENV_PYTHON=%CD%\.venv\Scripts\python.exe"
 "!VENV_PYTHON!" -m pip install --upgrade pip || goto :failed
 "!VENV_PYTHON!" -m pip install -r requirements-local.txt || goto :failed
 "!VENV_PYTHON!" tools\fetch_xhs_assets.py || goto :failed
+"!VENV_PYTHON!" -m tools.prepare_licenses --node-executable "!NODE_EXE!" || goto :failed
 
 "!VENV_PYTHON!" -m PyInstaller --noconfirm --clean --onefile --noconsole --name DouyinLocalAPI --add-data "%CD%\src\dtk\signing\native;dtk\signing\native" --add-data "%CD%\local_api\xhs_assets;local_api\xhs_assets" --add-binary "!NODE_EXE!;local_api\xhs_assets\node" --collect-all playwright --collect-all execjs --hidden-import uvicorn.logging --hidden-import uvicorn.loops.auto --hidden-import uvicorn.protocols.http.auto --hidden-import uvicorn.protocols.websockets.auto desktop_main.py || goto :failed
+
+for %%F in (LICENSE NOTICE MODIFICATIONS.md THIRD_PARTY_NOTICES.md) do (
+  copy /y "%%F" "dist\%%F" >nul || goto :failed
+)
+xcopy /E /I /Y "%CD%\build\local-api-licenses" "%CD%\dist\licenses" >nul || goto :failed
 
 echo.
 echo Build succeeded: dist\DouyinLocalAPI.exe
 echo The executable opens the native Windows management window. Chrome is preferred and Edge is supported for account login.
+echo Distribute the dist folder with LICENSE, NOTICE, and licenses. Attribution is in the accompanying documents only.
 goto :done
 
 :find_python

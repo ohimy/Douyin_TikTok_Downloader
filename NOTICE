@@ -5,3 +5,11 @@ Licensed under the Apache License, Version 2.0. The full text is in the
 LICENSE file next to this one.
 
 https://github.com/Evil0ctal/Douyin_TikTok_Download_API
+
+Local API fork modification notice (2026-10-20)
+This distribution includes standalone intranet APIs, Douyin/Xiaohongshu
+account management, automatic HTTP/browser reading, request logging, and
+Web/Windows desktop management added by the local API fork.
+Fork: https://github.com/ohimy/Douyin_TikTok_Downloader
+See MODIFICATIONS.md for the modification summary and THIRD_PARTY_NOTICES.md
+for separately licensed components. The original notices above are retained.

@@ -1,3 +1,11 @@
+> **Fork 来源与修改声明：** 本仓库基于
+> [Evil0ctal/Douyin_TikTok_Download_API](https://github.com/Evil0ctal/Douyin_TikTok_Download_API)，
+> 保留原作者 Evil0ctal 及贡献者的版权（2021–2026）与 [Apache-2.0 许可证](LICENSE)。
+> 本分支新增独立的抖音 / 小红书内网 API 和 Windows 原生管理程序。
+> 使用本分支请先阅读 [本地版说明](README.LOCAL.zh-CN.md)；修改范围见
+> [MODIFICATIONS.md](MODIFICATIONS.md)，第三方来源见
+> [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。下方保留上游项目文档。
+
 <div align="center">
 <a href="https://douyin.wtf/" alt="logo"><img src="./logo/logo.svg" width="120" alt="Douyin_TikTok_Download_API"/></a>
 </div>

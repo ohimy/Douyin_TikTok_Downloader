@@ -1,4 +1,8 @@
-"""Windows desktop entrypoint: API server and native management window."""
+"""Windows desktop entrypoint: API server and native management window.
+
+Local API fork addition; modification notice dated 2026-10-20.
+See LICENSE, NOTICE, and MODIFICATIONS.md for attribution and local changes.
+"""
 
 from __future__ import annotations
 

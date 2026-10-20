@@ -1,5 +1,7 @@
 # 抖音 / 小红书 Local API（轻量 Windows 版）
 
+本地改造版本基于 [Evil0ctal/Douyin_TikTok_Download_API](https://github.com/Evil0ctal/Douyin_TikTok_Download_API)，保留原作者版权及 [Apache-2.0 许可证](LICENSE)。改动范围见 [MODIFICATIONS.md](MODIFICATIONS.md)，原项目声明见 [NOTICE](NOTICE)，小红书等单独许可组件见 [第三方来源与归属](THIRD_PARTY_NOTICES.md)。本说明为本分支新增，修改声明日期为 2026-10-20。
+
 这是基于本仓库 Douyin 签名实现的轻量内网服务，**不依赖 Docker、PostgreSQL 或 Redis**。它提供以下能力：
 
 - `GET /api/v1/douyin/users/{sec_user_id}/posts`：获取博主主页作品，支持 `cursor` 和 `count` 分页；
@@ -52,6 +54,8 @@ PyInstaller 不能从 macOS 交叉生成可靠的 Windows 可执行文件。把�
 
 成品是 `dist\\DouyinLocalAPI.exe`，可直接运行并打开 Windows 原生管理窗口；首次提交 Cookie 后会在 exe 同级目录建立 `data\\accounts.json`。成品为无控制台窗口程序；如需排障，可从命令提示符启动或临时使用源码运行。最终运行 exe 无需 Python 或 Node.js，但需要 Chrome 或 Edge 以便打开隔离登录窗口。
 
+构建前会按实际安装版本收集 Python、Node.js、CryptoJS、Playwright 及 Python 依赖的完整许可与 NOTICE；缺少必需文本时构建会停止。Node.js 安装目录没有许可时，脚本会从其准确版本标签下载原文，需联网。构建结果随附 `dist\\licenses\\`，以及 `dist\\LICENSE`、`dist\\NOTICE`、修改说明、第三方声明，不在软件界面展示。发布时请保留这些文档，建议整体分发 `dist` 文件夹。
+
 需要固定端口或数据目录时，可在启动前设置：
 
 ```bat
@@ -66,6 +70,12 @@ DouyinLocalAPI.exe
 set DOUYIN_LOCAL_API_OPEN_BROWSER=0
 python -m local_api.main
 ```
+
+## 来源与开源许可（仅文档展示）
+
+本软件用于内部分发，Web 面板和 Windows 原生管理窗口不提供版权展示、关于页或许可查看入口，也不提供许可查询 API。来源、版权及修改说明仅在项目文档与随附许可文件中保留，见本文开头链接。
+
+准备好依赖及小红书资源后，可执行 `python -m tools.prepare_licenses` 将当前环境的依赖许可收集到 `build/local-api-licenses/`；额外传入 `--node-executable /实际/node/路径` 可同时收集该 Node.js 版本许可。Windows 构建脚本自动执行完整收集并复制到发布目录，供直接阅读文档。
 
 ## 使用示例
 

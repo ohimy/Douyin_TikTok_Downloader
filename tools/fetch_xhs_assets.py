@@ -1,4 +1,8 @@
-"""Fetch pinned, redistributable XHS signing assets for development or packaging."""
+"""Fetch pinned, redistributable XHS signing assets for development or packaging.
+
+Local API fork addition; modification notice dated 2026-10-20.
+Upstream MIT text is retained in local_api/xhs_assets/THIRD_PARTY_NOTICES.md.
+"""
 
 from __future__ import annotations
 

@@ -1,5 +1,8 @@
 """Native Windows management window for the local API service.
 
+Local API fork addition; modification notice dated 2026-10-20.
+See LICENSE, NOTICE, and MODIFICATIONS.md for upstream attribution.
+
 This intentionally uses Tk/ttk from the Python standard library.  The packaged
 application therefore has a native desktop control surface without embedding a
 web browser or adding an Electron-style runtime.  The HTTP dashboard remains

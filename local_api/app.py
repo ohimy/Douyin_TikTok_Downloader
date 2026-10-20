@@ -1,5 +1,9 @@
 """A compact local HTTP API for the two Douyin read operations we expose.
 
+Local API fork additions and modifications, 2026-10-20: standalone service,
+account management, XHS adapters, and request logging.
+Upstream attribution and modification summary: LICENSE, NOTICE, MODIFICATIONS.md.
+
 This module intentionally has no database, Redis, browser, or Docker dependency.
 The cookie is kept in a local file and is read afresh for every upstream request,
 so replacing it through the API takes effect immediately.
